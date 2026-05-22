@@ -1,17 +1,412 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="A colorful interactive children’s storytelling website with stories, pictures, and audio players."
-    />
-    <title>Storybook Sparkles</title>
-    <script type="module" crossorigin src="/assets/index-BQy7ykXt.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DFq0BZUu.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>DeviceOS 3.0 — Phone & Tablet Simulator</title>
+  <style>
+    :root{
+      --page-bg:#111827;
+      --screen-bg:#f5f5f7;
+      --screen-text:#171717;
+      --muted:#6b7280;
+      --card:#ffffff;
+      --border:#e5e7eb;
+      --primary:#007aff;
+      --green:#34c759;
+      --orange:#ff9500;
+      --red:#ff3b30;
+      --purple:#8b5cf6;
+      --wallpaper:linear-gradient(135deg,#1fa2ff,#12d8fa,#a6ffcb);
+      --glass:rgba(255,255,255,.24);
+      --glass-border:rgba(255,255,255,.28);
+      --shadow:0 30px 90px rgba(0,0,0,.55);
+      --transition:.36s cubic-bezier(.22,.8,.2,1);
+      --brightness:1;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{min-height:100vh;background:radial-gradient(circle at top,#28304f 0,#111827 48%,#050816 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#fff;overflow:hidden}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer;border:0}
+    .landing{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top,#334155,#0f172a 55%,#020617);z-index:9999;transition:opacity .35s, transform .35s}
+    .landing.hidden{opacity:0;pointer-events:none;transform:scale(1.02)}
+    .landing-card{width:min(980px,100%);display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}
+    .hero h1{font-size:clamp(36px,6vw,72px);line-height:.95;letter-spacing:-2px;margin-bottom:16px}
+    .hero p{color:#cbd5e1;font-size:18px;line-height:1.7;max-width:590px}
+    .brand-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);padding:8px 12px;border-radius:999px;color:#e0f2fe;margin-bottom:16px;font-weight:700;font-size:13px}
+    .device-choices{display:grid;gap:16px}
+    .choice{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.16);border-radius:28px;padding:24px;text-align:left;color:#fff;box-shadow:0 15px 50px rgba(0,0,0,.28);transition:transform .2s,background .2s,border .2s}
+    .choice:hover{transform:translateY(-4px);background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28)}
+    .choice .big{font-size:48px;margin-bottom:12px;display:block}
+    .choice h2{font-size:25px;margin-bottom:8px}
+    .choice p{color:#cbd5e1;line-height:1.5}
+    .top-actions{position:fixed;left:50%;top:16px;transform:translateX(-50%);display:none;gap:10px;z-index:950}
+    .top-actions.show{display:flex}
+    .mini-btn{padding:9px 13px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(16px);font-weight:700;font-size:13px}
+    .stage{min-height:100vh;display:none;align-items:center;justify-content:center;padding:52px 18px 20px}
+    .stage.show{display:flex}
+    .device-frame{position:relative;background:#080808;box-shadow:var(--shadow);transition:width .35s,height .35s,border-radius .35s;padding:14px;filter:brightness(var(--brightness))}
+    .device-frame.phone{width:360px;height:730px;border-radius:48px;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 0 0 2.5px #3a3a3c,inset 0 0 0 7px #1c1c1e}
+    .device-frame.tablet{width:min(920px,95vw);height:min(620px,82vh);border-radius:34px;padding:16px;box-shadow:0 35px 95px rgba(0,0,0,.62),inset 0 0 0 3px #2f3035,inset 0 0 0 8px #141416}
+    .screen{width:100%;height:100%;position:relative;overflow:hidden;background:var(--wallpaper);background-size:cover;background-position:center;border-radius:32px;color:var(--screen-text);display:flex;flex-direction:column;transition:background .35s,color .35s}
+    .screen.dark{--screen-bg:#111827;--screen-text:#f9fafb;--muted:#9ca3af;--card:#1f2937;--border:#374151;--glass:rgba(17,24,39,.56);--glass-border:rgba(255,255,255,.1)}
+    .screen.tablet{border-radius:24px;display:grid;grid-template-columns:82px 1fr;grid-template-rows:42px 1fr}
+    .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:132px;height:29px;background:#080808;border-bottom-left-radius:18px;border-bottom-right-radius:18px;z-index:80}
+    .notch:after{content:'';position:absolute;right:28px;top:7px;width:9px;height:9px;border-radius:50%;background:#101827;border:2px solid #252a3a}
+    .screen.tablet .notch{display:none}
+    .status-bar{height:42px;display:flex;align-items:center;justify-content:space-between;padding:13px 22px 0;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);font-size:12px;font-weight:800;z-index:70;position:relative;grid-column:1 / -1}
+    .screen.tablet .status-bar{padding:8px 18px 0 100px;height:42px}
+    .status-left,.status-right{display:flex;align-items:center;gap:9px}
+    .status-chip{display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:4px 7px;border-radius:999px;transition:background .2s}
+    .status-chip:hover{background:rgba(255,255,255,.18)}
+    .battery{display:inline-flex;align-items:center;gap:4px}.battery-box{width:23px;height:11px;border:1.4px solid #fff;border-radius:3px;padding:1.5px}.battery-fill{height:100%;background:#fff;border-radius:1.5px;transition:width .5s}.battery-cap{width:3px;height:6px;background:#fff;border-radius:0 2px 2px 0;margin-left:-4px}
+    .tablet-sidebar{display:none;grid-row:2;grid-column:1;background:rgba(255,255,255,.18);border-right:1px solid rgba(255,255,255,.15);backdrop-filter:blur(22px);padding:12px 10px;z-index:20;flex-direction:column;gap:10px;align-items:center}
+    .screen.tablet .tablet-sidebar{display:flex}
+    .side-app{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,.32);border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 20px rgba(0,0,0,.12)}
+    .side-sep{height:1px;width:44px;background:rgba(255,255,255,.28);margin:4px 0}
+    .home-area{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;grid-column:2;grid-row:2;min-height:0}
+    .home-head{padding:14px 18px 0;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:space-between}
+    .home-title small{display:block;font-size:12px;opacity:.85;font-weight:700}.home-title strong{font-size:22px;letter-spacing:-.5px}.screen.tablet .home-title strong{font-size:30px}.home-search{display:none;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.24);border-radius:14px;padding:9px 12px;color:#fff;min-width:245px;backdrop-filter:blur(12px)}.home-search::placeholder{color:rgba(255,255,255,.88)}.screen.tablet .home-search{display:block}
+    .app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px;padding:18px 16px 8px;align-content:start;overflow-y:auto;flex:1;scrollbar-width:none}.app-grid::-webkit-scrollbar{display:none}.screen.tablet .app-grid{grid-template-columns:repeat(6,92px);gap:20px 14px;padding:22px;justify-content:start}
+    .app-icon{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,filter .15s;user-select:none}.app-icon:active{transform:scale(.86)}.app-icon:hover{filter:brightness(1.05)}.icon-box{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 10px 22px rgba(0,0,0,.25)}.screen.tablet .icon-box{width:68px;height:68px;border-radius:20px;font-size:31px}.app-name{max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);font-size:10.5px;font-weight:700}.screen.tablet .app-name{font-size:12px;max-width:90px}
+    .dock{background:rgba(255,255,255,.25);backdrop-filter:blur(22px);margin:8px 10px 10px;padding:10px 8px;border-radius:28px;display:flex;justify-content:space-around;border:1px solid rgba(255,255,255,.23);z-index:40}.dock .icon-box{width:46px;height:46px;border-radius:14px;font-size:20px}.dock .app-name{display:none}.screen.tablet .dock{display:none}
+    .window{position:absolute;background:var(--screen-bg);color:var(--screen-text);z-index:100;display:flex;flex-direction:column;overflow:hidden;transform:translateY(105%);opacity:0;transition:transform var(--transition),opacity var(--transition),left var(--transition),width var(--transition),height var(--transition);border-radius:32px;box-shadow:0 15px 50px rgba(0,0,0,.18)}
+    .window.active{transform:translateY(0);opacity:1}.screen.phone .window{inset:0}.screen.tablet .window{top:54px;bottom:18px;left:100px;width:calc(100% - 118px);border-radius:24px;border:1px solid rgba(0,0,0,.08)}.screen.tablet.split .window.panel-a.active{left:98px;width:calc((100% - 126px)/2)}.screen.tablet.split .window.panel-b.active{left:calc(108px + (100% - 126px)/2);width:calc((100% - 126px)/2)}.screen.phone .window.panel-b{display:none}
+    .window-header{height:76px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px 14px;background:var(--screen-bg);border-bottom:1px solid var(--border);flex-shrink:0}.screen.tablet .window-header{height:64px;padding:0 16px 12px}.window-title{font-size:22px;font-weight:900;letter-spacing:-.6px}.window-actions{display:flex;gap:8px;align-items:center}.round-btn{width:32px;height:32px;border-radius:999px;background:var(--border);color:var(--screen-text);display:flex;align-items:center;justify-content:center;font-weight:900}.pill-btn{height:32px;padding:0 11px;border-radius:999px;background:#e5e7eb;color:#111827;font-weight:800;font-size:12px}.screen.dark .pill-btn{background:#374151;color:#f9fafb}.window-content{padding:16px;overflow:auto;flex:1;min-height:0}.window-content::-webkit-scrollbar{width:6px}.window-content::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:99px}
+    .home-bar-container{position:absolute;bottom:5px;left:0;right:0;height:28px;display:flex;align-items:center;justify-content:center;z-index:160;cursor:pointer}.home-bar{width:124px;height:4.5px;background:#fff;border-radius:99px;opacity:.78;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:.22s}.home-bar-container:hover .home-bar{width:146px;opacity:1}.screen.tablet .home-bar-container{display:none}
+    .drawer,.control-center,.recents{position:absolute;z-index:300;background:rgba(245,245,247,.78);color:#111827;backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.35);box-shadow:0 25px 80px rgba(0,0,0,.25);transition:transform var(--transition),opacity var(--transition);opacity:0;pointer-events:none}.screen.dark .drawer,.screen.dark .control-center,.screen.dark .recents{background:rgba(17,24,39,.82);color:#f9fafb;border-color:rgba(255,255,255,.1)}
+    .drawer{top:48px;left:12px;right:12px;max-height:72%;border-radius:26px;padding:16px;transform:translateY(-20px)}.drawer.open{opacity:1;pointer-events:auto;transform:translateY(0)}.drawer h3,.control-center h3,.recents h3{font-size:18px;margin-bottom:12px}.notification{padding:13px;border-radius:18px;background:rgba(255,255,255,.72);margin-bottom:10px;border:1px solid rgba(0,0,0,.04)}.screen.dark .notification{background:rgba(31,41,55,.8)}.notification strong{display:block;font-size:14px}.notification span{font-size:12px;color:var(--muted);line-height:1.4}
+    .control-center{right:12px;top:48px;width:292px;border-radius:28px;padding:16px;transform:translateY(-20px)}.control-center.open{opacity:1;pointer-events:auto;transform:translateY(0)}.cc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.cc-tile{height:76px;border-radius:22px;background:rgba(255,255,255,.72);display:flex;flex-direction:column;justify-content:center;gap:4px;padding:12px;font-weight:900;border:1px solid rgba(0,0,0,.04)}.screen.dark .cc-tile{background:rgba(31,41,55,.78)}.cc-tile.on{background:linear-gradient(135deg,#007aff,#38bdf8);color:#fff}.cc-slider{margin-top:12px;padding:12px;border-radius:20px;background:rgba(255,255,255,.72)}.screen.dark .cc-slider{background:rgba(31,41,55,.78)}.cc-slider label{display:flex;justify-content:space-between;font-size:12px;font-weight:900;margin-bottom:7px}.cc-slider input{width:100%}
+    .recents{inset:58px 12px 38px;border-radius:28px;padding:16px;transform:scale(.96)}.recents.open{opacity:1;pointer-events:auto;transform:scale(1)}.recent-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.screen.tablet .recent-grid{grid-template-columns:repeat(3,1fr)}.recent-card{height:116px;background:rgba(255,255,255,.72);border-radius:20px;padding:14px;border:1px solid rgba(0,0,0,.04);display:flex;flex-direction:column;justify-content:space-between}.screen.dark .recent-card{background:rgba(31,41,55,.8)}.recent-card .emoji{font-size:30px}.recent-card strong{font-size:14px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.04);margin-bottom:12px}.muted{color:var(--muted)}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.big-number{font-size:38px;font-weight:300}.small{font-size:12px}.btn{padding:10px 12px;border-radius:12px;background:var(--primary);color:#fff;font-weight:900}.btn.secondary{background:var(--border);color:var(--screen-text)}.danger{background:var(--red)!important;color:#fff!important}
+    .toggle{width:46px;height:27px;background:#d1d5db;border-radius:99px;position:relative;transition:.25s}.toggle:after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;background:white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.22);transition:.25s}.toggle.on{background:#34c759}.toggle.on:after{left:22px}.settings-list{list-style:none}.settings-list li{padding:15px 4px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:700}.storage-bar{height:10px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:9px}.storage-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#007aff,#34c759,#ff9500)}.storage-stack{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--border);margin-top:10px}.stack-a{background:#007aff}.stack-b{background:#34c759}.stack-c{background:#ff9500}.stack-d{background:#8b5cf6}
+    .calc-display{height:82px;background:#1c1c1e;color:#fff;border-radius:20px;display:flex;align-items:flex-end;justify-content:flex-end;padding:18px;font-size:42px;font-weight:300;overflow:hidden;margin-bottom:12px}.calc-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.calc-btn{height:52px;border-radius:28px;background:#e5e5ea;color:#111827;font-size:20px;font-weight:800}.calc-btn.op{background:#ff9500;color:#fff}.calc-btn.eq{background:#007aff;color:#fff}.calc-btn.zero{grid-column:span 2;text-align:left;padding-left:22px}
+    textarea{width:100%;min-height:360px;border:0;outline:0;background:transparent;color:var(--screen-text);font-size:15px;line-height:1.6;resize:none}.browser-bar{display:flex;gap:8px}.browser-bar input{flex:1;padding:11px 12px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--screen-text)}.browser-frame{margin-top:12px;height:330px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;color:var(--muted)}.quick-links{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.quick-links button{padding:12px;border-radius:14px;background:var(--card);color:var(--screen-text);border:1px solid var(--border);font-weight:800}
+    .gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.clock-main{text-align:center;padding:30px 0}.clock-main .time{font-size:58px;font-weight:200}.clock-main .date{color:var(--muted);margin-top:8px}.map-frame{width:100%;height:390px;border:0;border-radius:18px;background:var(--card)}
+    .paint-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}.paint-tools input[type="color"]{width:34px;height:34px;border:0;border-radius:8px;background:transparent}.paint-tools button,.paint-tools select{padding:8px 10px;border-radius:10px;background:var(--card);color:var(--screen-text);border:1px solid var(--border);font-weight:800}.paint-wrap{display:grid;grid-template-columns:1fr;gap:10px}.screen.tablet .paint-wrap{grid-template-columns:1fr 190px}.paint-canvas{width:100%;height:auto;border-radius:16px;background:#fff;border:1px solid var(--border);touch-action:none}.suggestions{display:flex;flex-wrap:wrap;gap:8px}.screen.tablet .suggestions{display:grid;grid-template-columns:repeat(2,1fr)}.suggestions button{padding:12px;border-radius:14px;background:var(--card);color:var(--screen-text);border:1px solid var(--border);font-weight:900;font-size:20px}
+    .file-drop{border:2px dashed var(--border);padding:18px;border-radius:18px;text-align:center;background:var(--card);margin-bottom:12px}.file-list{display:grid;gap:8px}.file-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--border)}.file-item strong{display:block}.file-item span{font-size:12px;color:var(--muted)}.store-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.screen.tablet .store-grid{grid-template-columns:repeat(3,1fr)}.store-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px}.store-icon{font-size:34px;margin-bottom:8px}.store-card h4{margin-bottom:4px}.store-card p{font-size:12px;color:var(--muted);min-height:36px;margin-bottom:10px}
+    .music-controls{display:flex;align-items:center;justify-content:center;gap:16px;font-size:24px}.music-controls button{font-size:26px;background:transparent}.playlist{margin-top:12px;display:grid;gap:8px}.track{padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--border)}.track.active{background:var(--primary);color:#fff}.wallpaper-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.wallpaper-option{aspect-ratio:1;border-radius:16px;border:3px solid transparent}.wallpaper-option.selected{border-color:#fff;box-shadow:0 0 0 3px var(--primary)}
+    @keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}.app-icon{animation:popIn .35s both}.app-icon:nth-child(2){animation-delay:.03s}.app-icon:nth-child(3){animation-delay:.06s}.app-icon:nth-child(4){animation-delay:.09s}.app-icon:nth-child(5){animation-delay:.12s}.app-icon:nth-child(6){animation-delay:.15s}.app-icon:nth-child(7){animation-delay:.18s}.app-icon:nth-child(8){animation-delay:.21s}
+    @media(max-width:760px){body{overflow:auto}.landing-card{grid-template-columns:1fr}.stage{padding:56px 10px 18px}.device-frame.tablet{width:96vw;height:640px}.screen.tablet{grid-template-columns:64px 1fr}.screen.tablet .app-grid{grid-template-columns:repeat(3,1fr);padding:16px}.screen.tablet .home-search{display:none}.screen.tablet .status-bar{padding-left:78px}.screen.tablet .window{left:76px;width:calc(100% - 88px)}.screen.tablet.split .window.panel-a.active,.screen.tablet.split .window.panel-b.active{left:76px;width:calc(100% - 88px)}.screen.tablet.split .window.panel-b.active{display:none}.screen.tablet .icon-box{width:58px;height:58px}.top-actions{top:8px}}
+  </style>
+</head>
+<body>
+  <div class="landing" id="landing">
+    <div class="landing-card">
+      <div class="hero">
+        <div class="brand-pill">✨ deviceos.in demo</div>
+        <h1>DeviceOS 3.0</h1>
+        <p>A lightweight browser-based phone and tablet OS simulator. Built for demos, experiments, apps, files, drawing, browsing, settings, and device-style UI testing.</p>
+      </div>
+      <div class="device-choices">
+        <button class="choice" onclick="startDevice('phone')"><span class="big">📱</span><h2>Launch Phone OS</h2><p>Portrait mobile simulator with dock, app grid, home bar, control center, and phone-style apps.</p></button>
+        <button class="choice" onclick="startDevice('tablet')"><span class="big">📟</span><h2>Launch Tablet OS</h2><p>Landscape tablet simulator with sidebar, 6-column grid, bigger apps, split-view mode, and tablet layout.</p></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-actions" id="topActions">
+    <button class="mini-btn" onclick="goSelector()">🏠 Selector</button>
+    <button class="mini-btn" onclick="switchDevice()">🔁 Switch Device</button>
+  </div>
+
+  <main class="stage" id="stage">
+    <div class="device-frame phone" id="deviceFrame">
+      <div class="screen phone" id="screen">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <div class="status-left"><span class="status-chip" onclick="toggleNotifications()"><span id="statusTime">12:00</span></span></div>
+          <div class="status-right">
+            <span class="status-chip" onclick="toggleControlCenter()"><span id="wifiStatus">📶</span><span id="btStatus">🔵</span></span>
+            <span class="battery"><span id="batteryPct">85</span>% <span class="battery-box"><span class="battery-fill" id="batteryFill" style="width:85%"></span></span><span class="battery-cap"></span></span>
+          </div>
+        </div>
+
+        <nav class="tablet-sidebar" id="tabletSidebar"></nav>
+
+        <section class="home-area" id="homeArea">
+          <div class="home-head">
+            <div class="home-title"><small id="deviceLabel">Phone Demo</small><strong>DeviceOS 3.0</strong></div>
+            <input class="home-search" id="homeSearch" placeholder="Search apps..." oninput="renderHomeApps()" />
+          </div>
+          <div class="app-grid" id="appGrid"></div>
+          <div class="dock" id="dock"></div>
+        </section>
+
+        <section class="window panel-a" id="windowA">
+          <div class="window-header"><div class="window-title" id="titleA">App</div><div class="window-actions"><button class="pill-btn split-only" onclick="toggleSplit()">Split</button><button class="round-btn" onclick="closePanel('A')">✕</button></div></div>
+          <div class="window-content" id="contentA"></div>
+        </section>
+        <section class="window panel-b" id="windowB">
+          <div class="window-header"><div class="window-title" id="titleB">App</div><div class="window-actions"><button class="round-btn" onclick="closePanel('B')">✕</button></div></div>
+          <div class="window-content" id="contentB"></div>
+        </section>
+
+        <aside class="drawer" id="notificationDrawer">
+          <div class="row"><h3>Notifications</h3><button class="pill-btn" onclick="clearNotifications()">Clear</button></div>
+          <div id="notificationList"></div>
+        </aside>
+
+        <aside class="control-center" id="controlCenter">
+          <h3>Control Center</h3>
+          <div class="cc-grid">
+            <button class="cc-tile" id="ccAirplane" onclick="toggleSetting('airplane')">✈️<span>Airplane</span></button>
+            <button class="cc-tile on" id="ccWifi" onclick="toggleSetting('wifi')">📶<span>Wi‑Fi</span></button>
+            <button class="cc-tile on" id="ccBluetooth" onclick="toggleSetting('bluetooth')">🔵<span>Bluetooth</span></button>
+            <button class="cc-tile" id="ccDark" onclick="toggleSetting('darkmode')">🌙<span>Dark</span></button>
+          </div>
+          <div class="cc-slider"><label><span>☀️ Brightness</span><span id="brightnessValue">100%</span></label><input id="brightnessRange" type="range" min="45" max="110" value="100" oninput="setBrightness(this.value)"></div>
+          <div class="cc-slider"><label><span>🔊 Volume</span><span id="volumeValue">70%</span></label><input id="volumeRange" type="range" min="0" max="100" value="70" oninput="setVolume(this.value)"></div>
+          <button class="btn secondary" style="width:100%;margin-top:12px" onclick="openRecents()">▦ Recent Apps</button>
+        </aside>
+
+        <aside class="recents" id="recents">
+          <div class="row"><h3>Recent Apps</h3><button class="pill-btn" onclick="closeRecents()">Close</button></div>
+          <div class="recent-grid" id="recentGrid"></div>
+        </aside>
+
+        <div class="home-bar-container" onclick="handleHomeBar()"><div class="home-bar"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const BASE_APPS = [
+      {id:'weather',name:'Weather',icon:'☀️',color:'linear-gradient(160deg,#4facfe,#00f2fe)',dock:false},
+      {id:'notes',name:'Notes',icon:'📝',color:'linear-gradient(160deg,#fffde4,#ffe259)',dock:false},
+      {id:'calc',name:'Calculator',icon:'🧮',color:'linear-gradient(160deg,#ff6b6b,#ee5a24)',dock:false},
+      {id:'settings',name:'Settings',icon:'⚙️',color:'linear-gradient(160deg,#b8c6db,#8e9eab)',dock:false},
+      {id:'gallery',name:'Gallery',icon:'🖼️',color:'linear-gradient(160deg,#a18cd1,#fbc2eb)',dock:false},
+      {id:'clock',name:'Clock',icon:'⏰',color:'linear-gradient(160deg,#ffecd2,#fcb69f)',dock:false},
+      {id:'health',name:'Health',icon:'❤️',color:'linear-gradient(160deg,#43e97b,#38f9d7)',dock:false},
+      {id:'maps',name:'Maps',icon:'🗺️',color:'linear-gradient(160deg,#89f7fe,#66a6ff)',dock:false},
+      {id:'paint',name:'Smart Paint',icon:'🎨',color:'linear-gradient(160deg,#f093fb,#f5576c)',dock:false},
+      {id:'wallpaper',name:'Wallpaper',icon:'🏞️',color:'linear-gradient(160deg,#f6d365,#fda085)',dock:false},
+      {id:'music',name:'Music',icon:'🎵',color:'#ff9500',dock:false},
+      {id:'browser',name:'Browser',icon:'🌐',color:'#007aff',dock:false},
+      {id:'store',name:'App Store',icon:'🛍️',color:'linear-gradient(160deg,#7c3aed,#06b6d4)',dock:false},
+      {id:'phone',name:'Phone',icon:'📞',color:'#34c759',dock:true},
+      {id:'messages',name:'Messages',icon:'💬',color:'#ff3b30',dock:true},
+      {id:'camera',name:'Camera',icon:'📷',color:'#111827',dock:true},
+      {id:'files',name:'Files',icon:'📁',color:'#8e8e93',dock:true}
+    ];
+    const STORE_APPS = [
+      {id:'calendar',name:'Calendar',icon:'📅',color:'linear-gradient(160deg,#ef4444,#f97316)',desc:'Simple calendar and events demo.'},
+      {id:'games',name:'Mini Games',icon:'🎮',color:'linear-gradient(160deg,#22c55e,#14b8a6)',desc:'Tiny tap game for demo fun.'},
+      {id:'news',name:'News',icon:'📰',color:'linear-gradient(160deg,#64748b,#0f172a)',desc:'Local sample news cards.'},
+      {id:'reader',name:'Book Reader',icon:'📚',color:'linear-gradient(160deg,#f59e0b,#ec4899)',desc:'Story/PDF reader placeholder app.'}
+    ];
+    const wallpapers = [
+      {name:'Ocean',css:'linear-gradient(135deg,#1fa2ff,#12d8fa,#a6ffcb)'},
+      {name:'Sunset',css:'linear-gradient(135deg,#ff6b6b,#ee5a24,#f093fb)'},
+      {name:'Forest',css:'linear-gradient(135deg,#11998e,#38ef7d)'},
+      {name:'Purple',css:'linear-gradient(135deg,#8E2DE2,#4A00E0)'},
+      {name:'Midnight',css:'linear-gradient(135deg,#232526,#414345)'},
+      {name:'Cotton',css:'linear-gradient(135deg,#a18cd1,#fbc2eb)'}
+    ];
+    let activeDevice='phone';
+    let panelApps={A:null,B:null};
+    let recentApps=JSON.parse(localStorage.getItem('deviceos-recents')||'[]');
+    let installedApps=JSON.parse(localStorage.getItem('deviceos-installed')||'[]');
+    let settings=JSON.parse(localStorage.getItem('deviceos-settings')||'{"wifi":true,"bluetooth":true,"airplane":false,"darkmode":false,"notifications":true,"volume":70,"brightness":100}');
+    let notifications=JSON.parse(localStorage.getItem('deviceos-notifications')||'[]');
+    let battery=85;
+    let audio=new Audio(), playlist=[], currentTrackIndex=-1, paintReady=false, paintUndo=[];
+
+    function $(id){return document.getElementById(id)}
+    function allApps(){ return [...BASE_APPS, ...STORE_APPS.filter(a=>installedApps.includes(a.id))]; }
+    function findApp(id){ return [...BASE_APPS,...STORE_APPS].find(a=>a.id===id) || BASE_APPS[0]; }
+    function appButton(app, extra=''){
+      return `<div class="app-icon ${extra}" onclick="openApp('${app.id}')"><div class="icon-box" style="background:${app.color};color:white">${app.icon}</div><div class="app-name">${app.name}</div></div>`;
+    }
+    function persist(){ localStorage.setItem('deviceos-settings',JSON.stringify(settings)); localStorage.setItem('deviceos-installed',JSON.stringify(installedApps)); localStorage.setItem('deviceos-recents',JSON.stringify(recentApps)); localStorage.setItem('deviceos-notifications',JSON.stringify(notifications)); }
+
+    function startDevice(type){
+      activeDevice=type;
+      $('landing').classList.add('hidden'); $('stage').classList.add('show'); $('topActions').classList.add('show');
+      $('deviceFrame').className='device-frame '+type; $('screen').className='screen '+type+(settings.darkmode?' dark':'');
+      $('deviceLabel').textContent=type==='phone'?'Phone Demo':'Tablet Demo';
+      renderHomeApps(); renderDock(); renderSidebar(); applySettingsUI(); addNotification('Welcome to DeviceOS 3.0', type==='phone'?'Phone simulator is ready.':'Tablet simulator is ready with sidebar and split view.');
+    }
+    function goSelector(){ closePanel('A'); closePanel('B'); $('stage').classList.remove('show'); $('topActions').classList.remove('show'); $('landing').classList.remove('hidden'); }
+    function switchDevice(){ startDevice(activeDevice==='phone'?'tablet':'phone'); }
+    function renderHomeApps(){
+      const q=($('homeSearch')?.value||'').toLowerCase();
+      const apps=allApps().filter(a=>!a.dock && (!q || a.name.toLowerCase().includes(q)));
+      $('appGrid').innerHTML=apps.map(a=>appButton(a)).join('');
+    }
+    function renderDock(){ $('dock').innerHTML=BASE_APPS.filter(a=>a.dock).map(a=>appButton(a)).join(''); }
+    function renderSidebar(){
+      const sidebar=$('tabletSidebar');
+      sidebar.innerHTML=`<button class="side-app" onclick="handleHomeBar()">🏠</button><button class="side-app" onclick="toggleNotifications()">🔔</button><button class="side-app" onclick="toggleControlCenter()">⚙️</button><button class="side-app" onclick="openRecents()">▦</button><div class="side-sep"></div>` + BASE_APPS.filter(a=>a.dock).map(a=>`<button class="side-app" onclick="openApp('${a.id}')">${a.icon}</button>`).join('');
+    }
+
+    function openApp(id, panel){
+      const targetPanel = panel || (activeDevice==='tablet' && $('screen').classList.contains('split') && panelApps.A ? 'B' : 'A');
+      const app=findApp(id);
+      panelApps[targetPanel]=id;
+      $('title'+targetPanel).textContent=app.name;
+      $('content'+targetPanel).innerHTML=renderApp(id,targetPanel);
+      $('window'+targetPanel).classList.add('active');
+      if(targetPanel==='A' && activeDevice==='phone') $('windowB').classList.remove('active');
+      pushRecent(id); closeOverlays();
+      setTimeout(()=>afterRender(id,targetPanel),50);
+    }
+    function closePanel(panel){ $('window'+panel).classList.remove('active'); panelApps[panel]=null; if(panel==='B') $('screen').classList.remove('split'); }
+    function handleHomeBar(){ closePanel('A'); closePanel('B'); closeOverlays(); }
+    function toggleSplit(){ if(activeDevice!=='tablet') return; $('screen').classList.toggle('split'); if($('screen').classList.contains('split') && !panelApps.B) openApp('notes','B'); }
+    function pushRecent(id){ recentApps=[id,...recentApps.filter(x=>x!==id)].slice(0,8); persist(); }
+
+    function renderApp(id,panel){
+      switch(id){
+        case 'weather': return weatherHTML();
+        case 'notes': return `<textarea id="notes-${panel}" placeholder="Type your notes here..."></textarea><div class="small muted" style="text-align:right">💾 Auto-saved locally</div>`;
+        case 'calc': return `<div class="calc-display" id="calc-display-${panel}">0</div><div class="calc-buttons" id="calc-buttons-${panel}"></div>`;
+        case 'settings': return settingsHTML();
+        case 'gallery': return galleryHTML();
+        case 'clock': return `<div class="clock-main"><div class="time" id="clockBig-${panel}">12:00</div><div class="date" id="clockDate-${panel}"></div></div><div class="card"><b>⏱️ Stopwatch</b><p class="muted small">Demo stopwatch placeholder. Add real timer logic later.</p></div>`;
+        case 'health': return `<div class="card"><h4 class="muted">Steps</h4><span class="big-number">8,432</span> steps</div><div class="card"><h4 class="muted">Heart</h4><span class="big-number">72</span> BPM</div><div class="card"><h4 class="muted">Sleep</h4><span class="big-number">7h 22m</span></div>`;
+        case 'maps': return `<iframe class="map-frame" src="https://www.openstreetmap.org/export/embed.html?bbox=88.3039%2C22.5326%2C88.4239%2C22.6126&layer=mapnik&marker=22.5726%2C88.3639"></iframe>`;
+        case 'paint': return paintHTML(panel);
+        case 'wallpaper': return wallpaperHTML();
+        case 'music': return musicHTML(panel);
+        case 'browser': return browserHTML(panel);
+        case 'phone': return `<div class="card"><div class="big-number">📞</div><h3>Phone</h3><p class="muted">Demo calling app.</p><button class="btn" onclick="addNotification('Fake Call','Calling Mom...')">Call Mom</button></div>`;
+        case 'messages': return `<div class="card"><h3>💬 Messages</h3><p><b>Arshad:</b> DeviceOS 3.0 is live!</p><p class="muted small">Demo messages only.</p></div>`;
+        case 'camera': return `<div class="card" style="text-align:center"><div style="font-size:70px">📷</div><h3>Camera Demo</h3><p class="muted">Browser camera can be added using getUserMedia permission.</p><button class="btn" onclick="addNotification('Camera','Photo saved to Gallery demo.')">Take Fake Photo</button></div>`;
+        case 'files': return filesHTML(panel);
+        case 'store': return storeHTML();
+        case 'calendar': return calendarHTML();
+        case 'games': return gamesHTML(panel);
+        case 'news': return newsHTML();
+        case 'reader': return readerHTML();
+        default: return `<div class="card">App not found.</div>`;
+      }
+    }
+    function afterRender(id,panel){
+      if(id==='weather') fetchWeather(panel);
+      if(id==='notes'){ const el=$('notes-'+panel); el.value=localStorage.getItem('deviceos-notes')||''; el.oninput=()=>localStorage.setItem('deviceos-notes',el.value); }
+      if(id==='calc') buildCalc(panel);
+      if(id==='settings') bindSettings();
+      if(id==='clock') updateClocks();
+      if(id==='paint') setupPaint(panel);
+      if(id==='music') setupMusic(panel);
+      if(id==='files') setupFiles(panel);
+      if(id==='browser') setupBrowser(panel);
+      if(id==='wallpaper') bindWallpaper();
+    }
+
+    function weatherHTML(){ return `<div class="card" style="text-align:center"><div id="weatherIcon" style="font-size:76px">🌤️</div><div class="big-number" id="weatherTemp">--°</div><div id="weatherDesc" class="muted">Loading weather...</div></div><div class="grid3"><div class="card"><b id="weatherWind">--</b><br><span class="muted small">Wind</span></div><div class="card"><b id="weatherHum">--</b><br><span class="muted small">Humidity</span></div><div class="card"><b id="weatherCity">Kolkata</b><br><span class="muted small">City</span></div></div><div class="card small muted">Weather uses a no-key public weather endpoint. No private API key is stored in this file.</div>`; }
+    async function fetchWeather(){
+      const lat=22.5726, lon=88.3639;
+      try{
+        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`);
+        const d=await r.json(); const c=d.current || {};
+        const code=c.weather_code||0; const icon= code===0?'☀️': code<4?'⛅': code<60?'🌥️': code<80?'🌧️':'⛈️';
+        document.querySelectorAll('#weatherIcon').forEach(e=>e.textContent=icon);
+        document.querySelectorAll('#weatherTemp').forEach(e=>e.textContent=Math.round(c.temperature_2m||0)+'°');
+        document.querySelectorAll('#weatherDesc').forEach(e=>e.textContent='Live weather • Kolkata');
+        document.querySelectorAll('#weatherWind').forEach(e=>e.textContent=(c.wind_speed_10m||'--')+' km/h');
+        document.querySelectorAll('#weatherHum').forEach(e=>e.textContent=(c.relative_humidity_2m||'--')+'%');
+      }catch(e){ document.querySelectorAll('#weatherDesc').forEach(x=>x.textContent='Weather unavailable offline.'); }
+    }
+
+    function buildCalc(panel){
+      const cont=$('calc-buttons-'+panel); if(!cont || cont.dataset.ready) return; cont.dataset.ready='1';
+      const disp=$('calc-display-'+panel); let expr='', reset=false;
+      const keys=['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','.','='];
+      keys.forEach(k=>{ const b=document.createElement('button'); b.className='calc-btn '+(['÷','×','−','+','%'].includes(k)?'op':'')+(k==='='?' eq':'')+(k==='0'?' zero':''); b.textContent=k; b.onclick=()=>{
+        if(k==='C'){expr='';disp.textContent='0'} else if(k==='±'){expr=expr.startsWith('-')?expr.slice(1):'-'+expr;disp.textContent=expr||'0'} else if(k==='='){try{let ev=expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');let res=Function('"use strict";return ('+(ev||'0')+')')();expr=Number(res.toFixed(8)).toString();disp.textContent=expr;reset=true}catch(e){disp.textContent='Error';expr='';reset=true}} else { if(reset&&!['+','−','×','÷','%'].includes(k)){expr='';reset=false} expr+=k;disp.textContent=expr; }
+      }; cont.appendChild(b); });
+    }
+
+    function settingsHTML(){
+      return `<div class="card"><div class="row"><div><h3>📱 DeviceOS 3.0</h3><p class="muted small">Phone + Tablet web simulator</p></div><b>Build 3.0.1</b></div></div>
+      <div class="card"><div class="row"><div><h3>💾 Storage</h3><p class="muted small">23.4 GB used of 64 GB</p></div><b>36%</b></div><div class="storage-bar"><div class="storage-fill" style="width:36%"></div></div><div class="storage-stack"><div class="stack-a" style="width:12%"></div><div class="stack-b" style="width:10%"></div><div class="stack-c" style="width:8%"></div><div class="stack-d" style="width:6%"></div></div><p class="small muted" style="margin-top:8px">System 8 GB • Apps 6.2 GB • Media 9.2 GB</p></div>
+      <ul class="settings-list">
+        ${settingRow('✈️ Airplane Mode','airplane')}${settingRow('📶 Wi‑Fi','wifi')}${settingRow('🔵 Bluetooth','bluetooth')}${settingRow('🌙 Dark Mode','darkmode')}${settingRow('🔔 Notifications','notifications')}
+      </ul>
+      <div class="card"><h3>About Phone</h3><p class="muted small">Model: DeviceOS Virtual Phone / Tablet<br>Domain: deviceos.in<br>Storage: Browser local storage + IndexedDB<br>Security: no weather API key exposed.</p></div>`;
+    }
+    function settingRow(label,key){ return `<li><span>${label}</span><button class="toggle ${settings[key]?'on':''}" data-setting="${key}"></button></li>`; }
+    function bindSettings(){ document.querySelectorAll('[data-setting]').forEach(t=>{ t.onclick=(e)=>{e.stopPropagation();toggleSetting(t.dataset.setting)}; }); }
+    function toggleSetting(key){ settings[key]=!settings[key]; if(key==='airplane' && settings.airplane){settings.wifi=false;settings.bluetooth=false} persist(); applySettingsUI(); if(panelApps.A==='settings') openApp('settings','A'); if(panelApps.B==='settings') openApp('settings','B'); }
+    function applySettingsUI(){
+      $('screen').classList.toggle('dark',!!settings.darkmode);
+      $('wifiStatus').textContent=settings.wifi?'📶':'🚫'; $('btStatus').textContent=settings.bluetooth?'🔵':'⚫';
+      const map={airplane:'ccAirplane',wifi:'ccWifi',bluetooth:'ccBluetooth',darkmode:'ccDark'}; Object.keys(map).forEach(k=>$(map[k])?.classList.toggle('on',!!settings[k]));
+      setBrightness(settings.brightness||100,false); setVolume(settings.volume||70,false);
+    }
+    function setBrightness(v,save=true){ settings.brightness=Number(v); document.documentElement.style.setProperty('--brightness',v/100); $('brightnessValue').textContent=v+'%'; if($('brightnessRange')) $('brightnessRange').value=v; if(save) persist(); }
+    function setVolume(v,save=true){ settings.volume=Number(v); audio.volume=v/100; $('volumeValue').textContent=v+'%'; if($('volumeRange')) $('volumeRange').value=v; if(save) persist(); }
+
+    function galleryHTML(){ let imgs=''; for(let i=1;i<=12;i++) imgs+=`<img src="https://picsum.photos/240/240?random=${i+20}" alt="Gallery ${i}">`; return `<p class="small muted" style="margin-bottom:8px">Recents</p><div class="gallery-grid">${imgs}</div>`; }
+    function wallpaperHTML(){ return `<p class="muted small" style="margin-bottom:10px">Choose wallpaper</p><div class="wallpaper-grid">${wallpapers.map(w=>`<button class="wallpaper-option" data-wall="${encodeURIComponent(w.css)}" style="background:${w.css}"></button>`).join('')}</div><input type="file" id="wallInput" accept="image/*" style="margin-top:14px">`; }
+    function bindWallpaper(){ document.querySelectorAll('[data-wall]').forEach(b=>b.onclick=()=>applyWallpaper(decodeURIComponent(b.dataset.wall))); const inp=$('wallInput'); if(inp) inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>applyWallpaper(`url(${r.result})`);r.readAsDataURL(f)}; }
+    function applyWallpaper(css){ $('screen').style.setProperty('--wallpaper',css); localStorage.setItem('deviceos-wallpaper',css); }
+
+    function paintHTML(panel){ return `<div class="paint-tools"><input type="color" id="paintColor-${panel}" value="#111827"><input type="range" id="paintSize-${panel}" min="1" max="24" value="4"><select id="paintMode-${panel}"><option value="brush">Brush</option><option value="eraser">Eraser</option><option value="line">Line</option><option value="rect">Rectangle</option><option value="circle">Circle</option></select><button id="undoPaint-${panel}">Undo</button><button id="clearPaint-${panel}">Clear</button><button id="savePaint-${panel}">Save</button></div><div class="paint-wrap"><canvas class="paint-canvas" id="paintCanvas-${panel}" width="720" height="480"></canvas><div class="card"><h3>✨ Smart Suggestions</h3><p class="muted small">AutoDraw-style demo. Draw anything, then tap a clean symbol.</p><div class="suggestions" id="suggestions-${panel}">${['☀️','❤️','⭐','🏠','➡️','🌳','🚗','🐱'].map(x=>`<button onclick="stampPaint('${panel}','${x}')">${x}</button>`).join('')}</div></div></div>`; }
+    function setupPaint(panel){
+      const canvas=$('paintCanvas-'+panel); if(!canvas || canvas.dataset.ready) return; canvas.dataset.ready='1'; const ctx=canvas.getContext('2d'); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); let drawing=false,start=null,snapshot=null;
+      function pos(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}; }
+      function save(){ paintUndo.push(canvas.toDataURL()); if(paintUndo.length>30) paintUndo.shift(); }
+      canvas.onpointerdown=e=>{drawing=true; canvas.setPointerCapture(e.pointerId); save(); start=pos(e); snapshot=ctx.getImageData(0,0,canvas.width,canvas.height); ctx.beginPath(); ctx.moveTo(start.x,start.y);};
+      canvas.onpointermove=e=>{ if(!drawing)return; const p=pos(e), mode=$('paintMode-'+panel).value, size=$('paintSize-'+panel).value, color=$('paintColor-'+panel).value; ctx.lineWidth=size; ctx.strokeStyle=mode==='eraser'?'#fff':color; ctx.fillStyle=color; if(['line','rect','circle'].includes(mode)){ ctx.putImageData(snapshot,0,0); ctx.beginPath(); if(mode==='line'){ctx.moveTo(start.x,start.y);ctx.lineTo(p.x,p.y);ctx.stroke()} if(mode==='rect'){ctx.strokeRect(start.x,start.y,p.x-start.x,p.y-start.y)} if(mode==='circle'){const rad=Math.hypot(p.x-start.x,p.y-start.y);ctx.arc(start.x,start.y,rad,0,Math.PI*2);ctx.stroke()} } else { ctx.lineTo(p.x,p.y); ctx.stroke(); }};
+      canvas.onpointerup=()=>{drawing=false; addNotification('Smart Paint','Drawing updated. Try the smart suggestions.')};
+      $('clearPaint-'+panel).onclick=()=>{save();ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height)};
+      $('undoPaint-'+panel).onclick=()=>{const last=paintUndo.pop(); if(!last)return; const img=new Image(); img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0)}; img.src=last;};
+      $('savePaint-'+panel).onclick=()=>{const a=document.createElement('a');a.href=canvas.toDataURL();a.download='deviceos-drawing.png';a.click();};
+    }
+    function stampPaint(panel,emoji){ const canvas=$('paintCanvas-'+panel); if(!canvas)return; const ctx=canvas.getContext('2d'); paintUndo.push(canvas.toDataURL()); ctx.font='90px Arial'; ctx.fillText(emoji, canvas.width/2-45, canvas.height/2+35); addNotification('Smart Suggestion',emoji+' added to drawing.'); }
+
+    function musicHTML(panel){ return `<div class="card"><input type="file" id="musicInput-${panel}" accept="audio/*" multiple><p class="muted small" style="margin-top:8px">Upload local audio files. They play inside your browser only.</p></div><div class="card"><div class="music-controls"><button onclick="prevTrack()">⏮️</button><button id="playBtn-${panel}" onclick="toggleMusic()">▶️</button><button onclick="nextTrack()">⏭️</button></div><p style="text-align:center;margin-top:10px">Now: <b id="currentTrack-${panel}">None</b></p></div><div class="playlist" id="playlist-${panel}"></div>`; }
+    function setupMusic(panel){ const input=$('musicInput-'+panel); if(input) input.onchange=e=>{Array.from(e.target.files).forEach(file=>playlist.push({name:file.name,url:URL.createObjectURL(file)})); renderPlaylist(panel); if(currentTrackIndex<0) playTrack(0);}; renderPlaylist(panel); }
+    function renderPlaylist(panel){ const pl=$('playlist-'+panel); if(!pl)return; pl.innerHTML=playlist.map((t,i)=>`<div class="track ${i===currentTrackIndex?'active':''}" onclick="playTrack(${i})">🎵 ${t.name}</div>`).join(''); const ct=$('currentTrack-'+panel); if(ct) ct.textContent=playlist[currentTrackIndex]?.name||'None'; }
+    function playTrack(i){ if(i<0||i>=playlist.length)return; currentTrackIndex=i; audio.src=playlist[i].url; audio.play(); document.querySelectorAll('[id^="currentTrack-"]').forEach(x=>x.textContent=playlist[i].name); document.querySelectorAll('[id^="playlist-"]').forEach(x=>{ const panel=x.id.split('-')[1]; renderPlaylist(panel);}); }
+    function toggleMusic(){ if(audio.paused) audio.play(); else audio.pause(); }
+    function prevTrack(){ playTrack(currentTrackIndex-1); } function nextTrack(){ playTrack(currentTrackIndex+1); }
+
+    function browserHTML(panel){ return `<div class="browser-bar"><input id="browserInput-${panel}" placeholder="Search or enter URL"><button class="btn" onclick="browserGo('${panel}')">Go</button></div><div class="quick-links"><button onclick="quickOpen('https://www.google.com')">Google</button><button onclick="quickOpen('https://www.wikipedia.org')">Wikipedia</button><button onclick="quickOpen('https://www.youtube.com')">YouTube</button><button onclick="quickOpen('https://www.autodraw.com/')">AutoDraw</button></div><div class="browser-frame" id="browserFrame-${panel}"><div><h3>🌐 Better Browser</h3><p>Some websites block iframe loading, so this browser safely opens pages in a new tab.</p></div></div>`; }
+    function setupBrowser(panel){ const inp=$('browserInput-'+panel); if(inp) inp.onkeydown=e=>{if(e.key==='Enter')browserGo(panel)}; }
+    function browserGo(panel){ const q=$('browserInput-'+panel).value.trim(); if(!q)return; let url=q; if(!/^https?:\/\//i.test(url)){ if(q.includes('.')) url='https://'+q; else url='https://www.google.com/search?q='+encodeURIComponent(q); } window.open(url,'_blank'); addNotification('Browser','Opened '+url); }
+    function quickOpen(url){ window.open(url,'_blank'); }
+
+    function storeHTML(){ return `<div class="store-grid">${STORE_APPS.map(app=>{const on=installedApps.includes(app.id);return `<div class="store-card"><div class="store-icon">${app.icon}</div><h4>${app.name}</h4><p>${app.desc}</p><button class="btn ${on?'danger':''}" onclick="toggleInstall('${app.id}')">${on?'Remove':'Install'}</button></div>`}).join('')}</div>`; }
+    function toggleInstall(id){ if(installedApps.includes(id)){installedApps=installedApps.filter(x=>x!==id); addNotification('App Store','App removed.')} else {installedApps.push(id); addNotification('App Store','App installed.')} persist(); renderHomeApps(); if(panelApps.A==='store')openApp('store','A'); if(panelApps.B==='store')openApp('store','B'); }
+
+    function filesHTML(panel){ return `<div class="file-drop"><h3>📁 File Manager</h3><p class="muted small">Upload files here. They are saved in browser IndexedDB.</p><input type="file" id="fileInput-${panel}" multiple></div><div class="file-list" id="fileList-${panel}"><div class="muted small">Loading files...</div></div>`; }
+    function openDB(){ return new Promise((resolve,reject)=>{ const req=indexedDB.open('DeviceOSFiles',1); req.onupgradeneeded=()=>req.result.createObjectStore('files',{keyPath:'id'}); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
+    async function saveFileObj(file){ const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').put({id:Date.now()+'-'+file.name,name:file.name,type:file.type,size:file.size,blob:file,created:new Date().toISOString()}); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); }
+    async function getFiles(){ const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('files','readonly'); const req=tx.objectStore('files').getAll(); req.onsuccess=()=>resolve(req.result||[]); req.onerror=()=>reject(req.error); }); }
+    async function deleteFileObj(id){ const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').delete(id); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); }
+    async function setupFiles(panel){ const input=$('fileInput-'+panel); if(input) input.onchange=async e=>{ for(const f of Array.from(e.target.files)) await saveFileObj(f); addNotification('Files','File uploaded to local File Manager.'); renderFiles(panel);}; renderFiles(panel); }
+    async function renderFiles(panel){ const box=$('fileList-'+panel); if(!box)return; try{ const files=await getFiles(); if(!files.length){box.innerHTML='<div class="card muted small">No files yet. Upload any PDF, image, audio, or document.</div>';return;} box.innerHTML=files.map(f=>`<div class="file-item"><div><strong>${escapeHTML(f.name)}</strong><span>${formatSize(f.size)} • ${new Date(f.created).toLocaleString()}</span></div><div><button class="pill-btn" onclick="downloadFile('${f.id}')">Open</button> <button class="pill-btn danger" onclick="removeFile('${f.id}','${panel}')">Del</button></div></div>`).join(''); }catch(e){box.innerHTML='<div class="card muted small">File storage not supported in this browser.</div>';} }
+    async function downloadFile(id){ const files=await getFiles(); const f=files.find(x=>x.id===id); if(!f)return; const url=URL.createObjectURL(f.blob); window.open(url,'_blank'); }
+    async function removeFile(id,panel){ await deleteFileObj(id); renderFiles(panel); }
+    function formatSize(n){ if(n<1024)return n+' B'; if(n<1024*1024)return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; } function escapeHTML(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+    function calendarHTML(){ const now=new Date(); return `<div class="card" style="text-align:center"><div style="font-size:54px">📅</div><h2>${now.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h2><p class="muted">Today is ${now.toLocaleDateString('en-US',{weekday:'long',day:'numeric'})}</p></div><div class="card"><b>Demo Event</b><p class="muted small">Website update and Netlify deploy.</p></div>`; }
+    function gamesHTML(panel){ return `<div class="card" style="text-align:center"><h3>🎮 Tap Game</h3><p class="muted small">Tap the button as many times as you can.</p><div class="big-number" id="score-${panel}">0</div><button class="btn" onclick="incScore('${panel}')">Tap</button></div>`; }
+    function incScore(panel){ const e=$('score-'+panel); e.textContent=Number(e.textContent)+1; }
+    function newsHTML(){ return `<div class="card"><h3>📰 DeviceOS News</h3><p class="muted">DeviceOS 3.0 adds phone + tablet selector, app store, smart paint, files, and control center.</p></div><div class="card"><h3>🌐 Hosting</h3><p class="muted">Deploy this single index.html on Netlify, Firebase Hosting, or normal cPanel hosting.</p></div>`; }
+    function readerHTML(){ return `<div class="card"><h3>📚 Book Reader</h3><p class="muted">Use this app later for your kids story/PDF reader project.</p><input type="file" accept="application/pdf,audio/*,image/*" multiple><p class="small muted" style="margin-top:8px">Next upgrade: PDF.js viewer + audio narration + Firebase/admin upload.</p></div>`; }
+
+    function toggleNotifications(){ $('notificationDrawer').classList.toggle('open'); $('controlCenter').classList.remove('open'); $('recents').classList.remove('open'); renderNotifications(); }
+    function toggleControlCenter(){ $('controlCenter').classList.toggle('open'); $('notificationDrawer').classList.remove('open'); $('recents').classList.remove('open'); }
+    function closeOverlays(){ $('notificationDrawer').classList.remove('open'); $('controlCenter').classList.remove('open'); $('recents').classList.remove('open'); }
+    function addNotification(title,msg){ if(!settings.notifications)return; notifications=[{title,msg,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})},...notifications].slice(0,12); persist(); renderNotifications(); }
+    function renderNotifications(){ const box=$('notificationList'); if(!notifications.length){box.innerHTML='<div class="notification"><strong>No notifications</strong><span>You are all caught up.</span></div>';return;} box.innerHTML=notifications.map(n=>`<div class="notification"><strong>${n.title}</strong><span>${n.msg}<br>${n.time}</span></div>`).join(''); }
+    function clearNotifications(){ notifications=[]; persist(); renderNotifications(); }
+    function openRecents(){ $('recents').classList.add('open'); $('controlCenter').classList.remove('open'); $('notificationDrawer').classList.remove('open'); renderRecents(); }
+    function closeRecents(){ $('recents').classList.remove('open'); }
+    function renderRecents(){ const grid=$('recentGrid'); if(!recentApps.length){grid.innerHTML='<div class="notification"><strong>No recent apps</strong><span>Open apps to see them here.</span></div>';return;} grid.innerHTML=recentApps.map(id=>{const a=findApp(id);return `<button class="recent-card" onclick="openApp('${id}');closeRecents();"><span class="emoji">${a.icon}</span><strong>${a.name}</strong><span class="muted small">Tap to reopen</span></button>`}).join(''); }
+
+    function updateClocks(){ const now=new Date(); const t=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); $('statusTime').textContent=t; document.querySelectorAll('[id^="clockBig-"]').forEach(e=>e.textContent=t); document.querySelectorAll('[id^="clockDate-"]').forEach(e=>e.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})); }
+    setInterval(updateClocks,1000); updateClocks();
+    setInterval(()=>{ if(battery>0) battery--; $('batteryPct').textContent=battery; $('batteryFill').style.width=battery+'%'; },60000);
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') handleHomeBar(); });
+    const savedWp=localStorage.getItem('deviceos-wallpaper'); if(savedWp) setTimeout(()=>applyWallpaper(savedWp),50);
+    applySettingsUI(); renderNotifications();
+  </script>
+</body>
 </html>
