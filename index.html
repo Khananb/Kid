@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>DeviceOS 3.0 — Phone & Tablet Simulator</title>
+  <!-- Favicons -->
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="shortcut icon" href="assets/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/favicon.png">
   <!-- Google Fonts Outfit & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,6 +35,8 @@
       --transition: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
       --brightness: 1;
       --blur: blur(20px);
+      --android-nav-height: 44px;
+      --phone-safe-bottom: 56px;
     }
 
     * {
@@ -188,10 +194,10 @@
     .top-actions {
       position: fixed;
       left: 50%;
-      top: 14px;
+      top: 12px;
       transform: translateX(-50%);
       display: none;
-      gap: 12px;
+      gap: 10px;
       z-index: 950;
     }
 
@@ -200,7 +206,7 @@
     }
 
     .mini-btn {
-      padding: 8px 16px;
+      padding: 7px 13px;
       border-radius: 99px;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -208,7 +214,7 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12.5px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
@@ -227,7 +233,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 56px 18px 24px;
+      padding: 78px 18px 18px;
       overflow: hidden;
     }
 
@@ -264,20 +270,21 @@
       transition: background 0.4s ease, color 0.4s ease;
     }
 
-    /* Phone Mode (Google Pixel 8 style, reduced size) */
+    /* Phone Mode (compact 4.7-inch Pixel-style layout) */
     .device-frame.phone {
       width: 320px;
-      height: 660px;
-      border-radius: 38px;
-      padding: 10px;
+      height: min(640px, calc(100vh - 118px));
+      border-radius: 36px;
+      padding: 9px;
       background: #1c1c1f;
       box-shadow: 
         0 25px 65px rgba(0,0,0,0.5),
         inset 0 0 0 2px #323236,
         inset 0 0 0 5px #151517;
+      flex-shrink: 0;
     }
     .screen.phone {
-      border-radius: 28px;
+      border-radius: 27px;
     }
 
     /* Pixel 8 side buttons on the right side */
@@ -293,13 +300,13 @@
     }
     /* Pixel 8 Power Button (Above volume key) */
     .device-frame.phone::before {
-      top: 90px;
-      height: 30px;
+      top: 82px;
+      height: 28px;
     }
     /* Pixel 8 Volume Rocker (Below power key) */
     .device-frame.phone::after {
-      top: 135px;
-      height: 60px;
+      top: 124px;
+      height: 56px;
     }
 
     /* Tablet Mode */
@@ -520,6 +527,17 @@
       display: block;
     }
 
+    .screen.phone .home-head {
+      padding: 8px 20px 0;
+    }
+    .screen.phone .home-title small {
+      font-size: 11px;
+    }
+    .screen.phone .home-title strong {
+      font-size: 24px;
+      line-height: 1.05;
+    }
+
     .app-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -532,6 +550,10 @@
     }
     .app-grid::-webkit-scrollbar {
       display: none;
+    }
+    .screen.phone .app-grid {
+      gap: 10px 2px;
+      padding: 12px 10px calc(var(--android-nav-height) + 72px);
     }
     .screen.tablet .app-grid {
       grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
@@ -565,6 +587,12 @@
       font-size: 24px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
     }
+    .screen.phone .icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
+      font-size: 22px;
+    }
     .screen.tablet .icon-box {
       width: 66px;
       height: 66px;
@@ -582,6 +610,10 @@
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.1px;
+    }
+    .screen.phone .app-name {
+      font-size: 10px;
+      max-width: 60px;
     }
     .screen.tablet .app-name {
       font-size: 12px;
@@ -601,6 +633,12 @@
       border: 1px solid rgba(255, 255, 255, 0.12);
       z-index: 80;
     }
+    .screen.phone .dock {
+      margin: 4px 10px calc(var(--android-nav-height) + 8px);
+      padding: 7px 8px;
+      border-radius: 24px;
+      flex-shrink: 0;
+    }
     .screen.dark .dock {
       background: rgba(15, 15, 20, 0.45);
       border-color: rgba(255,255,255,0.06);
@@ -611,6 +649,12 @@
       border-radius: 10px;
       font-size: 18px;
       box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+    .screen.phone .dock .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      font-size: 18px;
     }
     .dock .app-name {
       display: none;
@@ -753,34 +797,64 @@
       min-height: 0;
       background: var(--screen-bg);
     }
+    .screen.phone .window-content {
+      padding-bottom: calc(var(--android-nav-height) + 18px);
+    }
 
-    /* Home Bar (Phone) */
-    .home-bar-container {
+    /* Android Pixel 8 Nav Bar */
+    .android-nav {
       position: absolute;
-      bottom: 4px;
+      bottom: 0;
       left: 0;
       right: 0;
-      height: 22px;
+      height: var(--android-nav-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 190;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .screen.dark .android-nav {
+      background: rgba(10, 10, 15, 0.4);
+      border-top-color: rgba(255, 255, 255, 0.05);
+    }
+    .nav-btn {
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 190;
       cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s, transform 0.1s;
     }
-    .home-bar {
-      width: 120px;
-      height: 4.5px;
-      background: #fff;
-      border-radius: 99px;
-      opacity: 0.8;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      transition: width 0.22s, opacity 0.22s;
+    .nav-btn:hover { opacity: 1; }
+    .nav-btn:active { transform: scale(0.9); }
+    
+    .nav-back {
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-right: 14px solid var(--screen-text);
+      border-radius: 2px;
     }
-    .home-bar-container:hover .home-bar {
-      width: 140px;
-      opacity: 1;
+    .nav-home {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--screen-text);
+      border-radius: 50%;
     }
-    .screen.tablet .home-bar-container {
+    .nav-recent {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--screen-text);
+      border-radius: 4px;
+    }
+    .screen.tablet .android-nav {
       display: none;
     }
 
@@ -919,7 +993,7 @@
 
     /* Recents Switcher */
     .recents {
-      inset: 52px 12px 34px;
+      inset: 52px 12px calc(var(--android-nav-height) + 10px);
       border-radius: 26px;
       padding: 18px;
       transform: scale(0.96);
@@ -941,6 +1015,9 @@
     }
     .screen.tablet .recent-grid {
       grid-template-columns: repeat(3, 1fr);
+    }
+    .screen.tablet .recents {
+      inset: 52px 12px 34px;
     }
     .recent-card {
       height: 120px;
@@ -1182,7 +1259,7 @@
     }
     .browser-frame {
       margin-top: 12px;
-      height: 280px;
+      height: clamp(200px, 45vh, 400px);
       border-radius: 14px;
       border: 1px solid var(--border);
       overflow: hidden;
@@ -1210,6 +1287,27 @@
       border: 1px solid var(--border);
       font-weight: 700;
       font-size: 12.5px;
+    }
+
+    /* Browser Phone Overrides */
+    .screen.phone .browser-bar input {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .screen.phone .browser-bar .btn {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+    .screen.phone .quick-links {
+      gap: 4px;
+    }
+    .screen.phone .quick-links button {
+      padding: 8px;
+      font-size: 11.5px;
+    }
+    .screen.phone .browser-frame {
+      height: clamp(180px, 40vh, 320px);
+      padding: 12px;
     }
 
     /* Gallery Grid & Lightbox */
@@ -1582,16 +1680,62 @@
     .app-icon:nth-child(8) { animation-delay: 0.14s; }
 
     /* Responsive adjustments */
+    @media (max-height: 760px) {
+      .top-actions {
+        top: 8px;
+      }
+      .mini-btn {
+        padding: 6px 11px;
+        font-size: 12px;
+      }
+      .stage {
+        padding-top: 62px;
+        padding-bottom: 10px;
+      }
+      .device-frame.phone {
+        width: clamp(280px, 42vh, 320px);
+        height: min(620px, calc(100vh - 82px));
+      }
+      .screen.phone .home-head {
+        padding-top: 6px;
+      }
+      .screen.phone .app-grid {
+        gap: 8px 2px;
+        padding-top: 10px;
+      }
+      .screen.phone .icon-box {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+      }
+      .screen.phone .dock .icon-box {
+        width: 38px;
+        height: 38px;
+      }
+    }
+
     @media (max-width: 768px) {
       body {
-        overflow-y: auto;
+        overflow: hidden;
+      }
+      .top-actions {
+        top: 8px;
+        gap: 8px;
+      }
+      .mini-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .stage {
+        padding: 62px 8px 12px;
+      }
+      .device-frame.phone {
+        width: min(320px, calc(100vw - 20px));
+        height: min(640px, calc(100vh - 86px));
       }
       .landing-card {
         grid-template-columns: 1fr;
         gap: 20px;
-      }
-      .stage {
-        padding: 60px 8px 16px;
       }
       .device-frame.tablet {
         width: 95vw;
@@ -1771,9 +1915,17 @@
           <div class="recent-grid" id="recentGrid"></div>
         </aside>
 
-        <!-- Home Indicator Swipe Bar (Phone Mode) -->
-        <div class="home-bar-container" onclick="handleHomeBar()" title="Swipe Home">
-          <div class="home-bar"></div>
+        <!-- Android Pixel 8 Navigation Bar (Phone Mode) -->
+        <div class="android-nav">
+          <div class="nav-btn" onclick="goBack()" title="Back">
+            <div class="nav-back"></div>
+          </div>
+          <div class="nav-btn" onclick="handleHomeBar()" title="Home">
+            <div class="nav-home"></div>
+          </div>
+          <div class="nav-btn" onclick="openRecents()" title="Recents">
+            <div class="nav-recent"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1987,6 +2139,21 @@
       closePanel('A');
       closePanel('B');
       closeOverlays();
+    }
+
+    function goBack() {
+      // If overlays are open, close them first
+      if ($('notificationDrawer').classList.contains('open') || 
+          $('controlCenter').classList.contains('open') || 
+          $('recents').classList.contains('open')) {
+        closeOverlays();
+        return;
+      }
+      // If an app panel is open, close it
+      if (panelApps.A || panelApps.B) {
+        closePanel('A');
+        closePanel('B');
+      }
     }
 
     function toggleSplit() {
