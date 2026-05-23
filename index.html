@@ -4,409 +4,3719 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>DeviceOS 3.0 — Phone & Tablet Simulator</title>
+  <!-- Google Fonts Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet Maps CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    :root{
-      --page-bg:#111827;
-      --screen-bg:#f5f5f7;
-      --screen-text:#171717;
-      --muted:#6b7280;
-      --card:#ffffff;
-      --border:#e5e7eb;
-      --primary:#007aff;
-      --green:#34c759;
-      --orange:#ff9500;
-      --red:#ff3b30;
-      --purple:#8b5cf6;
-      --wallpaper:linear-gradient(135deg,#1fa2ff,#12d8fa,#a6ffcb);
-      --glass:rgba(255,255,255,.24);
-      --glass-border:rgba(255,255,255,.28);
-      --shadow:0 30px 90px rgba(0,0,0,.55);
-      --transition:.36s cubic-bezier(.22,.8,.2,1);
-      --brightness:1;
+    :root {
+      --page-bg: radial-gradient(circle at top, #1e293b, #0f172a 60%, #020617);
+      --screen-bg: #f5f5f7;
+      --screen-text: #171717;
+      --muted: #86868b;
+      --card: rgba(255, 255, 255, 0.7);
+      --border: rgba(0, 0, 0, 0.08);
+      --primary: #007aff;
+      --primary-glow: rgba(0, 122, 255, 0.35);
+      --green: #34c759;
+      --orange: #ff9500;
+      --red: #ff3b30;
+      --purple: #af52de;
+      --wallpaper: linear-gradient(135deg, #1fa2ff, #12d8fa, #a6ffcb);
+      --glass: rgba(255, 255, 255, 0.22);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      --transition: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+      --brightness: 1;
+      --blur: blur(20px);
     }
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    body{min-height:100vh;background:radial-gradient(circle at top,#28304f 0,#111827 48%,#050816 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#fff;overflow:hidden}
-    button,input,textarea,select{font:inherit}
-    button{cursor:pointer;border:0}
-    .landing{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top,#334155,#0f172a 55%,#020617);z-index:9999;transition:opacity .35s, transform .35s}
-    .landing.hidden{opacity:0;pointer-events:none;transform:scale(1.02)}
-    .landing-card{width:min(980px,100%);display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}
-    .hero h1{font-size:clamp(36px,6vw,72px);line-height:.95;letter-spacing:-2px;margin-bottom:16px}
-    .hero p{color:#cbd5e1;font-size:18px;line-height:1.7;max-width:590px}
-    .brand-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);padding:8px 12px;border-radius:999px;color:#e0f2fe;margin-bottom:16px;font-weight:700;font-size:13px}
-    .device-choices{display:grid;gap:16px}
-    .choice{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.16);border-radius:28px;padding:24px;text-align:left;color:#fff;box-shadow:0 15px 50px rgba(0,0,0,.28);transition:transform .2s,background .2s,border .2s}
-    .choice:hover{transform:translateY(-4px);background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28)}
-    .choice .big{font-size:48px;margin-bottom:12px;display:block}
-    .choice h2{font-size:25px;margin-bottom:8px}
-    .choice p{color:#cbd5e1;line-height:1.5}
-    .top-actions{position:fixed;left:50%;top:16px;transform:translateX(-50%);display:none;gap:10px;z-index:950}
-    .top-actions.show{display:flex}
-    .mini-btn{padding:9px 13px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(16px);font-weight:700;font-size:13px}
-    .stage{min-height:100vh;display:none;align-items:center;justify-content:center;padding:52px 18px 20px}
-    .stage.show{display:flex}
-    .device-frame{position:relative;background:#080808;box-shadow:var(--shadow);transition:width .35s,height .35s,border-radius .35s;padding:14px;filter:brightness(var(--brightness))}
-    .device-frame.phone{width:360px;height:730px;border-radius:48px;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 0 0 2.5px #3a3a3c,inset 0 0 0 7px #1c1c1e}
-    .device-frame.tablet{width:min(920px,95vw);height:min(620px,82vh);border-radius:34px;padding:16px;box-shadow:0 35px 95px rgba(0,0,0,.62),inset 0 0 0 3px #2f3035,inset 0 0 0 8px #141416}
-    .screen{width:100%;height:100%;position:relative;overflow:hidden;background:var(--wallpaper);background-size:cover;background-position:center;border-radius:32px;color:var(--screen-text);display:flex;flex-direction:column;transition:background .35s,color .35s}
-    .screen.dark{--screen-bg:#111827;--screen-text:#f9fafb;--muted:#9ca3af;--card:#1f2937;--border:#374151;--glass:rgba(17,24,39,.56);--glass-border:rgba(255,255,255,.1)}
-    .screen.tablet{border-radius:24px;display:grid;grid-template-columns:82px 1fr;grid-template-rows:42px 1fr}
-    .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:132px;height:29px;background:#080808;border-bottom-left-radius:18px;border-bottom-right-radius:18px;z-index:80}
-    .notch:after{content:'';position:absolute;right:28px;top:7px;width:9px;height:9px;border-radius:50%;background:#101827;border:2px solid #252a3a}
-    .screen.tablet .notch{display:none}
-    .status-bar{height:42px;display:flex;align-items:center;justify-content:space-between;padding:13px 22px 0;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);font-size:12px;font-weight:800;z-index:70;position:relative;grid-column:1 / -1}
-    .screen.tablet .status-bar{padding:8px 18px 0 100px;height:42px}
-    .status-left,.status-right{display:flex;align-items:center;gap:9px}
-    .status-chip{display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:4px 7px;border-radius:999px;transition:background .2s}
-    .status-chip:hover{background:rgba(255,255,255,.18)}
-    .battery{display:inline-flex;align-items:center;gap:4px}.battery-box{width:23px;height:11px;border:1.4px solid #fff;border-radius:3px;padding:1.5px}.battery-fill{height:100%;background:#fff;border-radius:1.5px;transition:width .5s}.battery-cap{width:3px;height:6px;background:#fff;border-radius:0 2px 2px 0;margin-left:-4px}
-    .tablet-sidebar{display:none;grid-row:2;grid-column:1;background:rgba(255,255,255,.18);border-right:1px solid rgba(255,255,255,.15);backdrop-filter:blur(22px);padding:12px 10px;z-index:20;flex-direction:column;gap:10px;align-items:center}
-    .screen.tablet .tablet-sidebar{display:flex}
-    .side-app{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,.32);border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 20px rgba(0,0,0,.12)}
-    .side-sep{height:1px;width:44px;background:rgba(255,255,255,.28);margin:4px 0}
-    .home-area{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;grid-column:2;grid-row:2;min-height:0}
-    .home-head{padding:14px 18px 0;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:space-between}
-    .home-title small{display:block;font-size:12px;opacity:.85;font-weight:700}.home-title strong{font-size:22px;letter-spacing:-.5px}.screen.tablet .home-title strong{font-size:30px}.home-search{display:none;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.24);border-radius:14px;padding:9px 12px;color:#fff;min-width:245px;backdrop-filter:blur(12px)}.home-search::placeholder{color:rgba(255,255,255,.88)}.screen.tablet .home-search{display:block}
-    .app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px;padding:18px 16px 8px;align-content:start;overflow-y:auto;flex:1;scrollbar-width:none}.app-grid::-webkit-scrollbar{display:none}.screen.tablet .app-grid{grid-template-columns:repeat(6,92px);gap:20px 14px;padding:22px;justify-content:start}
-    .app-icon{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,filter .15s;user-select:none}.app-icon:active{transform:scale(.86)}.app-icon:hover{filter:brightness(1.05)}.icon-box{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 10px 22px rgba(0,0,0,.25)}.screen.tablet .icon-box{width:68px;height:68px;border-radius:20px;font-size:31px}.app-name{max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);font-size:10.5px;font-weight:700}.screen.tablet .app-name{font-size:12px;max-width:90px}
-    .dock{background:rgba(255,255,255,.25);backdrop-filter:blur(22px);margin:8px 10px 10px;padding:10px 8px;border-radius:28px;display:flex;justify-content:space-around;border:1px solid rgba(255,255,255,.23);z-index:40}.dock .icon-box{width:46px;height:46px;border-radius:14px;font-size:20px}.dock .app-name{display:none}.screen.tablet .dock{display:none}
-    .window{position:absolute;background:var(--screen-bg);color:var(--screen-text);z-index:100;display:flex;flex-direction:column;overflow:hidden;transform:translateY(105%);opacity:0;transition:transform var(--transition),opacity var(--transition),left var(--transition),width var(--transition),height var(--transition);border-radius:32px;box-shadow:0 15px 50px rgba(0,0,0,.18)}
-    .window.active{transform:translateY(0);opacity:1}.screen.phone .window{inset:0}.screen.tablet .window{top:54px;bottom:18px;left:100px;width:calc(100% - 118px);border-radius:24px;border:1px solid rgba(0,0,0,.08)}.screen.tablet.split .window.panel-a.active{left:98px;width:calc((100% - 126px)/2)}.screen.tablet.split .window.panel-b.active{left:calc(108px + (100% - 126px)/2);width:calc((100% - 126px)/2)}.screen.phone .window.panel-b{display:none}
-    .window-header{height:76px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px 14px;background:var(--screen-bg);border-bottom:1px solid var(--border);flex-shrink:0}.screen.tablet .window-header{height:64px;padding:0 16px 12px}.window-title{font-size:22px;font-weight:900;letter-spacing:-.6px}.window-actions{display:flex;gap:8px;align-items:center}.round-btn{width:32px;height:32px;border-radius:999px;background:var(--border);color:var(--screen-text);display:flex;align-items:center;justify-content:center;font-weight:900}.pill-btn{height:32px;padding:0 11px;border-radius:999px;background:#e5e7eb;color:#111827;font-weight:800;font-size:12px}.screen.dark .pill-btn{background:#374151;color:#f9fafb}.window-content{padding:16px;overflow:auto;flex:1;min-height:0}.window-content::-webkit-scrollbar{width:6px}.window-content::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:99px}
-    .home-bar-container{position:absolute;bottom:5px;left:0;right:0;height:28px;display:flex;align-items:center;justify-content:center;z-index:160;cursor:pointer}.home-bar{width:124px;height:4.5px;background:#fff;border-radius:99px;opacity:.78;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:.22s}.home-bar-container:hover .home-bar{width:146px;opacity:1}.screen.tablet .home-bar-container{display:none}
-    .drawer,.control-center,.recents{position:absolute;z-index:300;background:rgba(245,245,247,.78);color:#111827;backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.35);box-shadow:0 25px 80px rgba(0,0,0,.25);transition:transform var(--transition),opacity var(--transition);opacity:0;pointer-events:none}.screen.dark .drawer,.screen.dark .control-center,.screen.dark .recents{background:rgba(17,24,39,.82);color:#f9fafb;border-color:rgba(255,255,255,.1)}
-    .drawer{top:48px;left:12px;right:12px;max-height:72%;border-radius:26px;padding:16px;transform:translateY(-20px)}.drawer.open{opacity:1;pointer-events:auto;transform:translateY(0)}.drawer h3,.control-center h3,.recents h3{font-size:18px;margin-bottom:12px}.notification{padding:13px;border-radius:18px;background:rgba(255,255,255,.72);margin-bottom:10px;border:1px solid rgba(0,0,0,.04)}.screen.dark .notification{background:rgba(31,41,55,.8)}.notification strong{display:block;font-size:14px}.notification span{font-size:12px;color:var(--muted);line-height:1.4}
-    .control-center{right:12px;top:48px;width:292px;border-radius:28px;padding:16px;transform:translateY(-20px)}.control-center.open{opacity:1;pointer-events:auto;transform:translateY(0)}.cc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.cc-tile{height:76px;border-radius:22px;background:rgba(255,255,255,.72);display:flex;flex-direction:column;justify-content:center;gap:4px;padding:12px;font-weight:900;border:1px solid rgba(0,0,0,.04)}.screen.dark .cc-tile{background:rgba(31,41,55,.78)}.cc-tile.on{background:linear-gradient(135deg,#007aff,#38bdf8);color:#fff}.cc-slider{margin-top:12px;padding:12px;border-radius:20px;background:rgba(255,255,255,.72)}.screen.dark .cc-slider{background:rgba(31,41,55,.78)}.cc-slider label{display:flex;justify-content:space-between;font-size:12px;font-weight:900;margin-bottom:7px}.cc-slider input{width:100%}
-    .recents{inset:58px 12px 38px;border-radius:28px;padding:16px;transform:scale(.96)}.recents.open{opacity:1;pointer-events:auto;transform:scale(1)}.recent-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.screen.tablet .recent-grid{grid-template-columns:repeat(3,1fr)}.recent-card{height:116px;background:rgba(255,255,255,.72);border-radius:20px;padding:14px;border:1px solid rgba(0,0,0,.04);display:flex;flex-direction:column;justify-content:space-between}.screen.dark .recent-card{background:rgba(31,41,55,.8)}.recent-card .emoji{font-size:30px}.recent-card strong{font-size:14px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.04);margin-bottom:12px}.muted{color:var(--muted)}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.big-number{font-size:38px;font-weight:300}.small{font-size:12px}.btn{padding:10px 12px;border-radius:12px;background:var(--primary);color:#fff;font-weight:900}.btn.secondary{background:var(--border);color:var(--screen-text)}.danger{background:var(--red)!important;color:#fff!important}
-    .toggle{width:46px;height:27px;background:#d1d5db;border-radius:99px;position:relative;transition:.25s}.toggle:after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;background:white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.22);transition:.25s}.toggle.on{background:#34c759}.toggle.on:after{left:22px}.settings-list{list-style:none}.settings-list li{padding:15px 4px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:700}.storage-bar{height:10px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:9px}.storage-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#007aff,#34c759,#ff9500)}.storage-stack{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--border);margin-top:10px}.stack-a{background:#007aff}.stack-b{background:#34c759}.stack-c{background:#ff9500}.stack-d{background:#8b5cf6}
-    .calc-display{height:82px;background:#1c1c1e;color:#fff;border-radius:20px;display:flex;align-items:flex-end;justify-content:flex-end;padding:18px;font-size:42px;font-weight:300;overflow:hidden;margin-bottom:12px}.calc-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.calc-btn{height:52px;border-radius:28px;background:#e5e5ea;color:#111827;font-size:20px;font-weight:800}.calc-btn.op{background:#ff9500;color:#fff}.calc-btn.eq{background:#007aff;color:#fff}.calc-btn.zero{grid-column:span 2;text-align:left;padding-left:22px}
-    textarea{width:100%;min-height:360px;border:0;outline:0;background:transparent;color:var(--screen-text);font-size:15px;line-height:1.6;resize:none}.browser-bar{display:flex;gap:8px}.browser-bar input{flex:1;padding:11px 12px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--screen-text)}.browser-frame{margin-top:12px;height:330px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;color:var(--muted)}.quick-links{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.quick-links button{padding:12px;border-radius:14px;background:var(--card);color:var(--screen-text);border:1px solid var(--border);font-weight:800}
-    .gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.clock-main{text-align:center;padding:30px 0}.clock-main .time{font-size:58px;font-weight:200}.clock-main .date{color:var(--muted);margin-top:8px}.map-frame{width:100%;height:390px;border:0;border-radius:18px;background:var(--card)}
-    .paint-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}.paint-tools input[type="color"]{width:34px;height:34px;border:0;border-radius:8px;background:transparent}.paint-tools button,.paint-tools select{padding:8px 10px;border-radius:10px;background:var(--card);color:var(--screen-text);border:1px solid var(--border);font-weight:800}.paint-wrap{display:grid;grid-template-columns:1fr;gap:10px}.screen.tablet .paint-wrap{grid-template-columns:1fr 190px}.paint-canvas{width:100%;height:auto;border-radius:16px;background:#fff;border:1px solid var(--border);touch-action:none}.suggestions{display:flex;flex-wrap:wrap;gap:8px}.screen.tablet .suggestions{display:grid;grid-template-columns:repeat(2,1fr)}.suggestions button{padding:12px;border-radius:14px;background:var(--card);color:var(--screen-text);border:1px solid var(--border);font-weight:900;font-size:20px}
-    .file-drop{border:2px dashed var(--border);padding:18px;border-radius:18px;text-align:center;background:var(--card);margin-bottom:12px}.file-list{display:grid;gap:8px}.file-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--border)}.file-item strong{display:block}.file-item span{font-size:12px;color:var(--muted)}.store-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.screen.tablet .store-grid{grid-template-columns:repeat(3,1fr)}.store-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px}.store-icon{font-size:34px;margin-bottom:8px}.store-card h4{margin-bottom:4px}.store-card p{font-size:12px;color:var(--muted);min-height:36px;margin-bottom:10px}
-    .music-controls{display:flex;align-items:center;justify-content:center;gap:16px;font-size:24px}.music-controls button{font-size:26px;background:transparent}.playlist{margin-top:12px;display:grid;gap:8px}.track{padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--border)}.track.active{background:var(--primary);color:#fff}.wallpaper-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.wallpaper-option{aspect-ratio:1;border-radius:16px;border:3px solid transparent}.wallpaper-option.selected{border-color:#fff;box-shadow:0 0 0 3px var(--primary)}
-    @keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}.app-icon{animation:popIn .35s both}.app-icon:nth-child(2){animation-delay:.03s}.app-icon:nth-child(3){animation-delay:.06s}.app-icon:nth-child(4){animation-delay:.09s}.app-icon:nth-child(5){animation-delay:.12s}.app-icon:nth-child(6){animation-delay:.15s}.app-icon:nth-child(7){animation-delay:.18s}.app-icon:nth-child(8){animation-delay:.21s}
-    @media(max-width:760px){body{overflow:auto}.landing-card{grid-template-columns:1fr}.stage{padding:56px 10px 18px}.device-frame.tablet{width:96vw;height:640px}.screen.tablet{grid-template-columns:64px 1fr}.screen.tablet .app-grid{grid-template-columns:repeat(3,1fr);padding:16px}.screen.tablet .home-search{display:none}.screen.tablet .status-bar{padding-left:78px}.screen.tablet .window{left:76px;width:calc(100% - 88px)}.screen.tablet.split .window.panel-a.active,.screen.tablet.split .window.panel-b.active{left:76px;width:calc(100% - 88px)}.screen.tablet.split .window.panel-b.active{display:none}.screen.tablet .icon-box{width:58px;height:58px}.top-actions{top:8px}}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--page-bg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Outfit', 'Inter', 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 99px;
+    }
+    .screen.dark ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Landing Page */
+    .landing {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(circle at top, #1e293b, #0f172a 70%, #020617);
+      z-index: 9999;
+      transition: opacity var(--transition), transform var(--transition);
+    }
+
+    .landing.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.03);
+    }
+
+    .landing-card {
+      width: min(920px, 100%);
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(38px, 5.5vw, 68px);
+      line-height: 1.0;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, #38bdf8 70%, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: #94a3b8;
+      font-size: 17px;
+      line-height: 1.6;
+      max-width: 500px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 14px;
+      border-radius: 99px;
+      color: #38bdf8;
+      margin-bottom: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .device-choices {
+      display: grid;
+      gap: 20px;
+    }
+
+    .choice {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 24px;
+      text-align: left;
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .choice:hover {
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .choice .big {
+      font-size: 40px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .choice h2 {
+      font-size: 22px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .choice p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    /* Top bar selectors */
+    .top-actions {
+      position: fixed;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%);
+      display: none;
+      gap: 12px;
+      z-index: 950;
+    }
+
+    .top-actions.show {
+      display: flex;
+    }
+
+    .mini-btn {
+      padding: 8px 16px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      font-weight: 600;
+      font-size: 13px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Simulator Stage */
+    .stage {
+      min-height: 100vh;
+      width: 100vw;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 56px 18px 24px;
+      overflow: hidden;
+    }
+
+    .stage.show {
+      display: flex;
+    }
+
+    /* Device Shells */
+    .device-frame {
+      position: relative;
+      background: #0d0d0d;
+      box-shadow: var(--shadow);
+      transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.4s;
+      padding: 12px;
+      filter: brightness(var(--brightness));
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Screen */
+    .screen {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      background: var(--wallpaper);
+      background-size: cover;
+      background-position: center;
+      color: var(--screen-text);
+      display: flex;
+      flex-direction: column;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* Phone Mode (Google Pixel 8 style, reduced size) */
+    .device-frame.phone {
+      width: 320px;
+      height: 660px;
+      border-radius: 38px;
+      padding: 10px;
+      background: #1c1c1f;
+      box-shadow: 
+        0 25px 65px rgba(0,0,0,0.5),
+        inset 0 0 0 2px #323236,
+        inset 0 0 0 5px #151517;
+    }
+    .screen.phone {
+      border-radius: 28px;
+    }
+
+    /* Pixel 8 side buttons on the right side */
+    .device-frame.phone::before,
+    .device-frame.phone::after {
+      content: '';
+      position: absolute;
+      right: -2px;
+      background: #323236;
+      width: 2.5px;
+      border-radius: 0 2px 2px 0;
+      z-index: 5;
+    }
+    /* Pixel 8 Power Button (Above volume key) */
+    .device-frame.phone::before {
+      top: 90px;
+      height: 30px;
+    }
+    /* Pixel 8 Volume Rocker (Below power key) */
+    .device-frame.phone::after {
+      top: 135px;
+      height: 60px;
+    }
+
+    /* Tablet Mode */
+    .device-frame.tablet {
+      width: 900px;
+      height: 600px;
+      border-radius: 34px;
+      box-shadow: 
+        0 40px 90px rgba(0,0,0,0.65),
+        inset 0 0 0 2px #2d2d2d,
+        inset 0 0 0 8px #151515;
+    }
+    .screen.tablet {
+      border-radius: 22px;
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      grid-template-rows: 40px 1fr;
+    }
+
+    /* Camera Punch Hole for Phone (Pixel 8 style) */
+    .camera-punch {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #000;
+      border-radius: 50%;
+      z-index: 200;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+    .screen.tablet .camera-punch {
+      display: none;
+    }
+
+    /* Dark Mode Overrides */
+    .screen.dark {
+      --screen-bg: #12121e;
+      --screen-text: #f3f4f6;
+      --muted: #9ca3af;
+      --card: rgba(30, 30, 42, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --glass: rgba(18, 18, 28, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 22px 0;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      font-size: 12px;
+      font-weight: 700;
+      z-index: 180;
+      position: relative;
+      grid-column: 1 / -1;
+      letter-spacing: 0.2px;
+    }
+    .screen.tablet .status-bar {
+      padding: 6px 20px 0 100px;
+      height: 40px;
+    }
+
+    .status-left, .status-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 99px;
+      transition: background 0.2s;
+    }
+
+    .status-chip:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .battery {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .battery-box {
+      width: 22px;
+      height: 11px;
+      border: 1.2px solid #fff;
+      border-radius: 3px;
+      padding: 1.2px;
+    }
+    .battery-fill {
+      height: 100%;
+      background: #fff;
+      border-radius: 1px;
+      transition: width 0.4s ease, background 0.3s ease;
+    }
+    .battery-cap {
+      width: 2px;
+      height: 5px;
+      background: #fff;
+      border-radius: 0 1.5px 1.5px 0;
+      margin-left: -4.5px;
+    }
+
+    /* Tablet Sidebar */
+    .tablet-sidebar {
+      display: none;
+      grid-row: 2;
+      grid-column: 1;
+      background: rgba(255, 255, 255, 0.14);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      padding: 16px 10px;
+      z-index: 90;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+    .screen.dark .tablet-sidebar {
+      background: rgba(10, 10, 15, 0.45);
+      border-right-color: rgba(255,255,255,0.06);
+    }
+    .screen.tablet .tablet-sidebar {
+      display: flex;
+    }
+
+    .side-app {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      color: #fff;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .side-app:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.28);
+    }
+    .side-sep {
+      height: 1px;
+      width: 36px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 6px 0;
+    }
+
+    /* Home Shell Grid */
+    .home-area {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      grid-column: 2;
+      grid-row: 2;
+      min-height: 0;
+    }
+
+    .home-head {
+      padding: 10px 22px 0;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .home-title small {
+      display: block;
+      font-size: 12px;
+      opacity: 0.85;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .home-title strong {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .screen.tablet .home-title strong {
+      font-size: 32px;
+    }
+
+    .home-search {
+      display: none;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 8px 14px;
+      color: #fff;
+      min-width: 250px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .home-search::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .screen.tablet .home-search {
+      display: block;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px 4px;
+      padding: 14px 12px 6px;
+      align-content: start;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: none;
+    }
+    .app-grid::-webkit-scrollbar {
+      display: none;
+    }
+    .screen.tablet .app-grid {
+      grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+      gap: 24px 16px;
+      padding: 24px;
+    }
+
+    /* App Icons */
+    .app-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s;
+      user-select: none;
+    }
+    .app-icon:active {
+      transform: scale(0.85);
+    }
+    .app-icon:hover {
+      filter: brightness(1.08);
+    }
+    .icon-box {
+      width: 50px;
+      height: 50px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+    .screen.tablet .icon-box {
+      width: 66px;
+      height: 66px;
+      border-radius: 18px;
+      font-size: 32px;
+    }
+    .app-name {
+      max-width: 64px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+    }
+    .screen.tablet .app-name {
+      font-size: 12px;
+      max-width: 86px;
+    }
+
+    /* Dock for Phone */
+    .dock {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      margin: 4px 10px 10px;
+      padding: 8px;
+      border-radius: 26px;
+      display: flex;
+      justify-content: space-around;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      z-index: 80;
+    }
+    .screen.dark .dock {
+      background: rgba(15, 15, 20, 0.45);
+      border-color: rgba(255,255,255,0.06);
+    }
+    .dock .icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      font-size: 18px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+    .dock .app-name {
+      display: none;
+    }
+    .screen.tablet .dock {
+      display: none;
+    }
+
+    /* App Window Shell */
+    .window {
+      position: absolute;
+      background: var(--screen-bg);
+      color: var(--screen-text);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(105%);
+      opacity: 0;
+      transition: transform var(--transition), opacity var(--transition), left var(--transition), width var(--transition), height var(--transition);
+      border-radius: 36px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .window.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .screen.phone .window {
+      inset: 0;
+    }
+
+    .screen.tablet .window {
+      top: 50px;
+      bottom: 16px;
+      left: 96px;
+      width: calc(100% - 112px);
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .screen.tablet.dark .window {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Splits for Tablet */
+    .screen.tablet.split .window.panel-a.active {
+      left: 96px;
+      width: calc((100% - 120px) / 2);
+    }
+    .screen.tablet.split .window.panel-b.active {
+      left: calc(102px + (100% - 120px) / 2);
+      width: calc((100% - 120px) / 2);
+    }
+    .screen.phone .window.panel-b {
+      display: none;
+    }
+
+    /* App Window Header */
+    .window-header {
+      height: 68px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 20px 10px;
+      background: var(--screen-bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .screen.tablet .window-header {
+      height: 56px;
+      padding: 0 16px 8px;
+    }
+    .window-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .window-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .round-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--screen-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 11px;
+      transition: background 0.2s;
+    }
+    .round-btn:hover {
+      background: rgba(0, 0, 0, 0.15);
+    }
+    .screen.dark .round-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .pill-btn {
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 99px;
+      background: #e4e4e7;
+      color: #18181b;
+      font-weight: 700;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .screen.dark .pill-btn {
+      background: #27272a;
+      color: #f4f4f5;
+    }
+    .pill-btn.danger {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* Tablet split button helper */
+    .split-only {
+      display: none;
+    }
+    .screen.tablet .split-only {
+      display: inline-flex;
+    }
+
+    .window-content {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      background: var(--screen-bg);
+    }
+
+    /* Home Bar (Phone) */
+    .home-bar-container {
+      position: absolute;
+      bottom: 4px;
+      left: 0;
+      right: 0;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 190;
+      cursor: pointer;
+    }
+    .home-bar {
+      width: 120px;
+      height: 4.5px;
+      background: #fff;
+      border-radius: 99px;
+      opacity: 0.8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transition: width 0.22s, opacity 0.22s;
+    }
+    .home-bar-container:hover .home-bar {
+      width: 140px;
+      opacity: 1;
+    }
+    .screen.tablet .home-bar-container {
+      display: none;
+    }
+
+    /* Drawers, Modals & Control Center Panels */
+    .drawer, .control-center, .recents {
+      position: absolute;
+      z-index: 300;
+      background: rgba(245, 245, 247, 0.76);
+      color: #17171c;
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+      transition: transform var(--transition), opacity var(--transition);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .screen.dark .drawer, .screen.dark .control-center, .screen.dark .recents {
+      background: rgba(24, 24, 37, 0.78);
+      color: #f3f4f6;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+    }
+
+    /* Notifications Drawer */
+    .drawer {
+      top: 44px;
+      left: 12px;
+      right: 12px;
+      max-height: 70%;
+      border-radius: 24px;
+      padding: 16px;
+      transform: translateY(-20px);
+    }
+    .drawer.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .notification {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7);
+      margin-bottom: 8px;
+      border: 1px solid rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .screen.dark .notification {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255,255,255,0.03);
+    }
+    .notification strong {
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+    .notification span {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    /* Control Center */
+    .control-center {
+      right: 12px;
+      top: 44px;
+      width: 290px;
+      border-radius: 26px;
+      padding: 16px;
+      transform: translateY(-20px);
+    }
+    .control-center.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .cc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .cc-tile {
+      height: 72px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      padding: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(0,0,0,0.03);
+      text-align: left;
+      color: inherit;
+      transition: background 0.2s, color 0.2s;
+    }
+    .screen.dark .cc-tile {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .cc-tile span {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+    .cc-tile.on {
+      background: linear-gradient(135deg, #007aff, #3498db);
+      color: #fff;
+      border: 0;
+    }
+
+    .cc-slider {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(0,0,0,0.02);
+    }
+    .screen.dark .cc-slider {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .cc-slider label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .cc-slider input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+      height: 4px;
+    }
+
+    /* Recents Switcher */
+    .recents {
+      inset: 52px 12px 34px;
+      border-radius: 26px;
+      padding: 18px;
+      transform: scale(0.96);
+      display: flex;
+      flex-direction: column;
+    }
+    .recents.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+    .recent-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .screen.tablet .recent-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .recent-card {
+      height: 120px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      color: inherit;
+      transition: transform 0.2s;
+    }
+    .recent-card:hover {
+      transform: translateY(-2px);
+    }
+    .screen.dark .recent-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255,255,255,0.03);
+    }
+    .recent-card .emoji {
+      font-size: 28px;
+    }
+    .recent-card strong {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Dynamic Cards and UI Blocks */
+    .card {
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+      margin-bottom: 12px;
+    }
+    .screen.dark .card {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .big-number {
+      font-size: 36px;
+      font-weight: 300;
+      letter-spacing: -1px;
+    }
+    .small {
+      font-size: 11.5px;
+    }
+    .muted {
+      color: var(--muted);
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 4px 12px var(--primary-glow);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn.secondary {
+      background: #e4e4e7;
+      color: #18181b;
+      box-shadow: none;
+    }
+    .screen.dark .btn.secondary {
+      background: #27272a;
+      color: #f4f4f5;
+    }
+
+    /* Switch & Toggle UI */
+    .toggle {
+      width: 44px;
+      height: 24px;
+      background: #d4d4d8;
+      border-radius: 99px;
+      position: relative;
+      transition: background 0.25s ease;
+      flex-shrink: 0;
+    }
+    .toggle:after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+      transition: left 0.25s ease;
+    }
+    .toggle.on {
+      background: var(--green);
+    }
+    .toggle.on:after {
+      left: 22px;
+    }
+
+    .settings-list {
+      list-style: none;
+    }
+    .settings-list li {
+      padding: 12px 4px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Storage Bar Visualizer */
+    .storage-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .storage-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--primary), var(--green), var(--orange));
+    }
+
+    .storage-stack {
+      display: flex;
+      height: 10px;
+      border-radius: 99px;
+      overflow: hidden;
+      background: var(--border);
+      margin-top: 10px;
+    }
+    .stack-a { background: var(--primary); }
+    .stack-b { background: var(--green); }
+    .stack-c { background: var(--orange); }
+    .stack-d { background: var(--purple); }
+
+    /* Calculator UI */
+    .calc-display {
+      height: 76px;
+      background: #18181b;
+      color: #fff;
+      border-radius: 16px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 14px;
+      font-size: 38px;
+      font-weight: 300;
+      overflow: hidden;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
+    }
+    .calc-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .calc-btn {
+      height: 48px;
+      border-radius: 24px;
+      background: #e4e4e7;
+      color: #18181b;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .calc-btn.op {
+      background: var(--orange);
+      color: #fff;
+    }
+    .calc-btn.eq {
+      background: var(--primary);
+      color: #fff;
+    }
+    .calc-btn.zero {
+      grid-column: span 2;
+      border-radius: 24px;
+      padding-left: 20px;
+      justify-content: flex-start;
+    }
+
+    /* Notes Textarea */
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--screen-text);
+      font-size: 14.5px;
+      line-height: 1.6;
+      resize: none;
+    }
+
+    /* Browser UI */
+    .browser-bar {
+      display: flex;
+      gap: 8px;
+    }
+    .browser-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--screen-text);
+      font-size: 13px;
+    }
+    .browser-frame {
+      margin-top: 12px;
+      height: 280px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 18px;
+      color: var(--muted);
+      gap: 12px;
+    }
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .quick-links button {
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--screen-text);
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    /* Gallery Grid & Lightbox */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .gallery-grid img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .gallery-grid img:hover {
+      transform: scale(0.97);
+    }
+
+    .lightbox {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .lightbox img {
+      max-width: 90%;
+      max-height: 75%;
+      border-radius: 16px;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    /* Clock & Stopwatch */
+    .clock-main {
+      text-align: center;
+      padding: 24px 0;
+    }
+    .clock-main .time {
+      font-size: 54px;
+      font-weight: 200;
+      letter-spacing: -1.5px;
+    }
+    .clock-main .date {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Maps App */
+    .map-frame {
+      width: 100%;
+      height: 290px;
+      border-radius: 14px;
+      background: var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Smart Paint Editor */
+    .paint-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .paint-tools input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+    .paint-tools button, .paint-tools select {
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--screen-text);
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .paint-tools button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+    .paint-wrap {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .screen.tablet .paint-wrap {
+      grid-template-columns: 1fr 180px;
+    }
+    .paint-canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      touch-action: none;
+      cursor: crosshair;
+      display: block;
+    }
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .screen.tablet .suggestions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .suggestions button {
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--screen-text);
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    /* Files App */
+    .file-drop {
+      border: 2px dashed var(--border);
+      padding: 14px;
+      border-radius: 14px;
+      text-align: center;
+      background: var(--card);
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    .file-list {
+      display: grid;
+      gap: 8px;
+    }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    .file-item strong {
+      display: block;
+      font-size: 12.5px;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-item span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* App Store App */
+    .store-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .screen.tablet .store-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .store-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+    }
+    .store-icon {
+      font-size: 32px;
+      margin-bottom: 6px;
+    }
+    .store-card h4 {
+      font-size: 13.5px;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+    .store-card p {
+      font-size: 11px;
+      color: var(--muted);
+      min-height: 28px;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    /* Music Player App */
+    .music-album-art {
+      width: 120px;
+      height: 120px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      transition: transform 0.5s;
+    }
+    .music-album-art.playing {
+      animation: pulseRotate 4s linear infinite;
+    }
+    @keyframes pulseRotate {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.04); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .music-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-size: 20px;
+      margin-top: 8px;
+    }
+    .music-controls button {
+      font-size: 22px;
+      background: transparent;
+      color: var(--screen-text);
+    }
+    .playlist {
+      margin-top: 12px;
+      display: grid;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .track {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+    .music-progress {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px 0 4px;
+      cursor: pointer;
+      position: relative;
+    }
+    .music-progress-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      border-radius: 2px;
+    }
+
+    /* Wallpaper Options */
+    .wallpaper-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .wallpaper-option {
+      aspect-ratio: 1;
+      border-radius: 12px;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+    .wallpaper-option.selected {
+      border-color: #fff;
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    /* Calendar Grid */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .cal-day-header {
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .cal-day.today {
+      background: var(--primary);
+      color: #fff;
+    }
+    .cal-day.has-event {
+      box-shadow: inset 0 0 0 1.5px var(--orange);
+    }
+
+    /* Reflex Speed Game */
+    .game-canvas {
+      width: 100%;
+      height: 200px;
+      background: #18181b;
+      border-radius: 14px;
+      cursor: pointer;
+      display: block;
+    }
+
+    /* Animations */
+    @keyframes popIn {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    .app-icon {
+      animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* Anim Delay */
+    .app-icon:nth-child(1) { animation-delay: 0s; }
+    .app-icon:nth-child(2) { animation-delay: 0.02s; }
+    .app-icon:nth-child(3) { animation-delay: 0.04s; }
+    .app-icon:nth-child(4) { animation-delay: 0.06s; }
+    .app-icon:nth-child(5) { animation-delay: 0.08s; }
+    .app-icon:nth-child(6) { animation-delay: 0.1s; }
+    .app-icon:nth-child(7) { animation-delay: 0.12s; }
+    .app-icon:nth-child(8) { animation-delay: 0.14s; }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      body {
+        overflow-y: auto;
+      }
+      .landing-card {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .stage {
+        padding: 60px 8px 16px;
+      }
+      .device-frame.tablet {
+        width: 95vw;
+        height: 600px;
+      }
+      .screen.tablet {
+        grid-template-columns: 60px 1fr;
+      }
+      .screen.tablet .app-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .screen.tablet .window {
+        left: 70px;
+        width: calc(100% - 80px);
+      }
+      .screen.tablet.split .window.panel-a.active,
+      .screen.tablet.split .window.panel-b.active {
+        left: 70px;
+        width: calc(100% - 80px);
+      }
+      .screen.tablet.split .window.panel-b.active {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Device Selection Landing Screen -->
   <div class="landing" id="landing">
     <div class="landing-card">
       <div class="hero">
-        <div class="brand-pill">✨ deviceos.in demo</div>
+        <div class="brand-pill">✨ deviceos.in Demo</div>
         <h1>DeviceOS 3.0</h1>
-        <p>A lightweight browser-based phone and tablet OS simulator. Built for demos, experiments, apps, files, drawing, browsing, settings, and device-style UI testing.</p>
+        <p>A premium browser-based phone & tablet OS simulator. Experience dynamic layouts, split view multitasking, file storage, drawing tools, live weather forecast, and interactive mapping.</p>
       </div>
       <div class="device-choices">
-        <button class="choice" onclick="startDevice('phone')"><span class="big">📱</span><h2>Launch Phone OS</h2><p>Portrait mobile simulator with dock, app grid, home bar, control center, and phone-style apps.</p></button>
-        <button class="choice" onclick="startDevice('tablet')"><span class="big">📟</span><h2>Launch Tablet OS</h2><p>Landscape tablet simulator with sidebar, 6-column grid, bigger apps, split-view mode, and tablet layout.</p></button>
+        <button class="choice" onclick="startDevice('phone')">
+          <span class="big">📱</span>
+          <h2>Launch Phone OS</h2>
+          <p>Portrait orientation mobile view with app grid, docked quick links, status indicators, and mobile layouts.</p>
+        </button>
+        <button class="choice" onclick="startDevice('tablet')">
+          <span class="big">📟</span>
+          <h2>Launch Tablet OS</h2>
+          <p>Landscape orientation view with responsive grids, split view multitasking, and side bar controller panel.</p>
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- Top Action Swapper (always floating above stage) -->
   <div class="top-actions" id="topActions">
-    <button class="mini-btn" onclick="goSelector()">🏠 Selector</button>
+    <button class="mini-btn" onclick="goSelector()">🏠 Home Selector</button>
     <button class="mini-btn" onclick="switchDevice()">🔁 Switch Device</button>
   </div>
 
+  <!-- Simulator Screen Stage -->
   <main class="stage" id="stage">
     <div class="device-frame phone" id="deviceFrame">
       <div class="screen phone" id="screen">
-        <div class="notch"></div>
-        <div class="status-bar">
-          <div class="status-left"><span class="status-chip" onclick="toggleNotifications()"><span id="statusTime">12:00</span></span></div>
-          <div class="status-right">
-            <span class="status-chip" onclick="toggleControlCenter()"><span id="wifiStatus">📶</span><span id="btStatus">🔵</span></span>
-            <span class="battery"><span id="batteryPct">85</span>% <span class="battery-box"><span class="battery-fill" id="batteryFill" style="width:85%"></span></span><span class="battery-cap"></span></span>
-          </div>
-        </div>
+        <!-- Phone Camera Punch Hole (Pixel 8 style) -->
+        <div class="camera-punch"></div>
 
+        <!-- Global Status Bar -->
+        <header class="status-bar" id="statusBar">
+          <div class="status-left">
+            <span class="status-chip" onclick="toggleNotifications()">
+              <span id="statusTime">12:00 PM</span>
+            </span>
+          </div>
+          <div class="status-right">
+            <span class="status-chip" onclick="toggleControlCenter()">
+              <span id="wifiStatus">📶</span>
+              <span id="btStatus">🔵</span>
+            </span>
+            <span class="battery" id="statusBarBattery">
+              <span id="batteryPct">85</span>% 
+              <span class="battery-box">
+                <span class="battery-fill" id="batteryFill" style="width: 85%"></span>
+              </span>
+              <span class="battery-cap"></span>
+            </span>
+          </div>
+        </header>
+
+        <!-- Tablet Exclusive Navigation Sidebar -->
         <nav class="tablet-sidebar" id="tabletSidebar"></nav>
 
+        <!-- Home Grid Area -->
         <section class="home-area" id="homeArea">
           <div class="home-head">
-            <div class="home-title"><small id="deviceLabel">Phone Demo</small><strong>DeviceOS 3.0</strong></div>
-            <input class="home-search" id="homeSearch" placeholder="Search apps..." oninput="renderHomeApps()" />
+            <div class="home-title">
+              <small id="deviceLabel">Phone Demo</small>
+              <strong>DeviceOS 3.0</strong>
+            </div>
+            <input class="home-search" id="homeSearch" placeholder="Search virtual apps..." oninput="renderHomeApps()" />
           </div>
           <div class="app-grid" id="appGrid"></div>
           <div class="dock" id="dock"></div>
         </section>
 
+        <!-- Application Window Panel A (Default/Left Panel) -->
         <section class="window panel-a" id="windowA">
-          <div class="window-header"><div class="window-title" id="titleA">App</div><div class="window-actions"><button class="pill-btn split-only" onclick="toggleSplit()">Split</button><button class="round-btn" onclick="closePanel('A')">✕</button></div></div>
+          <div class="window-header">
+            <div class="window-title" id="titleA">App Title</div>
+            <div class="window-actions">
+              <button class="pill-btn split-only" onclick="toggleSplit()">⚡ Split View</button>
+              <button class="round-btn" onclick="closePanel('A')">✕</button>
+            </div>
+          </div>
           <div class="window-content" id="contentA"></div>
         </section>
+
+        <!-- Application Window Panel B (Split/Right Panel) -->
         <section class="window panel-b" id="windowB">
-          <div class="window-header"><div class="window-title" id="titleB">App</div><div class="window-actions"><button class="round-btn" onclick="closePanel('B')">✕</button></div></div>
+          <div class="window-header">
+            <div class="window-title" id="titleB">App Title</div>
+            <div class="window-actions">
+              <button class="round-btn" onclick="closePanel('B')">✕</button>
+            </div>
+          </div>
           <div class="window-content" id="contentB"></div>
         </section>
 
+        <!-- Notifications Drawer Overlay -->
         <aside class="drawer" id="notificationDrawer">
-          <div class="row"><h3>Notifications</h3><button class="pill-btn" onclick="clearNotifications()">Clear</button></div>
+          <div class="row" style="margin-bottom: 12px;">
+            <h3>🔔 Notifications</h3>
+            <button class="pill-btn" onclick="clearNotifications()">Clear All</button>
+          </div>
           <div id="notificationList"></div>
         </aside>
 
+        <!-- Control Center Drawer Overlay -->
         <aside class="control-center" id="controlCenter">
-          <h3>Control Center</h3>
+          <h3 style="margin-bottom: 12px;">⚙️ Control Center</h3>
           <div class="cc-grid">
-            <button class="cc-tile" id="ccAirplane" onclick="toggleSetting('airplane')">✈️<span>Airplane</span></button>
-            <button class="cc-tile on" id="ccWifi" onclick="toggleSetting('wifi')">📶<span>Wi‑Fi</span></button>
-            <button class="cc-tile on" id="ccBluetooth" onclick="toggleSetting('bluetooth')">🔵<span>Bluetooth</span></button>
-            <button class="cc-tile" id="ccDark" onclick="toggleSetting('darkmode')">🌙<span>Dark</span></button>
+            <button class="cc-tile" id="ccAirplane" onclick="toggleSetting('airplane')">
+              ✈️ <span>Airplane</span>
+            </button>
+            <button class="cc-tile on" id="ccWifi" onclick="toggleSetting('wifi')">
+              📶 <span>Wi-Fi</span>
+            </button>
+            <button class="cc-tile on" id="ccBluetooth" onclick="toggleSetting('bluetooth')">
+              🔵 <span>Bluetooth</span>
+            </button>
+            <button class="cc-tile" id="ccDark" onclick="toggleSetting('darkmode')">
+              🌙 <span>Dark Mode</span>
+            </button>
           </div>
-          <div class="cc-slider"><label><span>☀️ Brightness</span><span id="brightnessValue">100%</span></label><input id="brightnessRange" type="range" min="45" max="110" value="100" oninput="setBrightness(this.value)"></div>
-          <div class="cc-slider"><label><span>🔊 Volume</span><span id="volumeValue">70%</span></label><input id="volumeRange" type="range" min="0" max="100" value="70" oninput="setVolume(this.value)"></div>
-          <button class="btn secondary" style="width:100%;margin-top:12px" onclick="openRecents()">▦ Recent Apps</button>
+          <!-- Sliders -->
+          <div class="cc-slider">
+            <label>
+              <span>☀️ Brightness</span>
+              <span id="brightnessValue">100%</span>
+            </label>
+            <input id="brightnessRange" type="range" min="40" max="110" value="100" oninput="setBrightness(this.value)" />
+          </div>
+          <div class="cc-slider" style="margin-top: 10px;">
+            <label>
+              <span>🔊 Volume</span>
+              <span id="volumeValue">80%</span>
+            </label>
+            <input id="volumeRange" type="range" min="0" max="100" value="80" oninput="setVolume(this.value)" />
+          </div>
+          <button class="btn secondary" style="width: 100%; margin-top: 12px;" onclick="openRecents()">
+            ▦ View Recent Apps
+          </button>
         </aside>
 
+        <!-- Recent Apps App-Switcher Overlay -->
         <aside class="recents" id="recents">
-          <div class="row"><h3>Recent Apps</h3><button class="pill-btn" onclick="closeRecents()">Close</button></div>
+          <div class="row" style="margin-bottom: 12px;">
+            <h3>▦ Recent Switcher</h3>
+            <button class="pill-btn" onclick="closeRecents()">Close</button>
+          </div>
           <div class="recent-grid" id="recentGrid"></div>
         </aside>
 
-        <div class="home-bar-container" onclick="handleHomeBar()"><div class="home-bar"></div></div>
+        <!-- Home Indicator Swipe Bar (Phone Mode) -->
+        <div class="home-bar-container" onclick="handleHomeBar()" title="Swipe Home">
+          <div class="home-bar"></div>
+        </div>
       </div>
     </div>
   </main>
 
+  <!-- Photo Lightbox Viewer -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">✕</span>
+    <img id="lightboxImg" src="" alt="Zoomed view" />
+  </div>
+
+  <!-- Leaflet Map Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    // ============================================================================
+    //  DeviceOS 3.0 Virtual Phone & Tablet Operating System Simulator
+    // ============================================================================
+
+    // App definitions
     const BASE_APPS = [
-      {id:'weather',name:'Weather',icon:'☀️',color:'linear-gradient(160deg,#4facfe,#00f2fe)',dock:false},
-      {id:'notes',name:'Notes',icon:'📝',color:'linear-gradient(160deg,#fffde4,#ffe259)',dock:false},
-      {id:'calc',name:'Calculator',icon:'🧮',color:'linear-gradient(160deg,#ff6b6b,#ee5a24)',dock:false},
-      {id:'settings',name:'Settings',icon:'⚙️',color:'linear-gradient(160deg,#b8c6db,#8e9eab)',dock:false},
-      {id:'gallery',name:'Gallery',icon:'🖼️',color:'linear-gradient(160deg,#a18cd1,#fbc2eb)',dock:false},
-      {id:'clock',name:'Clock',icon:'⏰',color:'linear-gradient(160deg,#ffecd2,#fcb69f)',dock:false},
-      {id:'health',name:'Health',icon:'❤️',color:'linear-gradient(160deg,#43e97b,#38f9d7)',dock:false},
-      {id:'maps',name:'Maps',icon:'🗺️',color:'linear-gradient(160deg,#89f7fe,#66a6ff)',dock:false},
-      {id:'paint',name:'Smart Paint',icon:'🎨',color:'linear-gradient(160deg,#f093fb,#f5576c)',dock:false},
-      {id:'wallpaper',name:'Wallpaper',icon:'🏞️',color:'linear-gradient(160deg,#f6d365,#fda085)',dock:false},
-      {id:'music',name:'Music',icon:'🎵',color:'#ff9500',dock:false},
-      {id:'browser',name:'Browser',icon:'🌐',color:'#007aff',dock:false},
-      {id:'store',name:'App Store',icon:'🛍️',color:'linear-gradient(160deg,#7c3aed,#06b6d4)',dock:false},
-      {id:'phone',name:'Phone',icon:'📞',color:'#34c759',dock:true},
-      {id:'messages',name:'Messages',icon:'💬',color:'#ff3b30',dock:true},
-      {id:'camera',name:'Camera',icon:'📷',color:'#111827',dock:true},
-      {id:'files',name:'Files',icon:'📁',color:'#8e8e93',dock:true}
+      { id: 'weather', name: 'Weather', icon: '☀️', color: 'linear-gradient(135deg, #3a7bd5, #3a6073)', dock: false },
+      { id: 'notes', name: 'Notes', icon: '📝', color: 'linear-gradient(135deg, #f1c40f, #f39c12)', dock: false },
+      { id: 'calc', name: 'Calculator', icon: '🧮', color: 'linear-gradient(135deg, #e74c3c, #c0392b)', dock: false },
+      { id: 'settings', name: 'Settings', icon: '⚙️', color: 'linear-gradient(135deg, #7f8c8d, #95a5a6)', dock: false },
+      { id: 'gallery', name: 'Gallery', icon: '🖼️', color: 'linear-gradient(135deg, #8e44ad, #9b59b6)', dock: false },
+      { id: 'clock', name: 'Clock', icon: '⏰', color: 'linear-gradient(135deg, #1abc9c, #16a085)', dock: false },
+      { id: 'health', name: 'Health', icon: '❤️', color: 'linear-gradient(135deg, #ff758c, #ff7eb3)', dock: false },
+      { id: 'maps', name: 'Maps', icon: '🗺️', color: 'linear-gradient(135deg, #4facfe, #00f2fe)', dock: false },
+      { id: 'paint', name: 'Smart Paint', icon: '🎨', color: 'linear-gradient(135deg, #fc5c7d, #6a3093)', dock: false },
+      { id: 'wallpaper', name: 'Wallpaper', icon: '🏞️', color: 'linear-gradient(135deg, #f6d365, #fda085)', dock: false },
+      { id: 'music', name: 'Music', icon: '🎵', color: '#ff9500', dock: false },
+      { id: 'browser', name: 'Browser', icon: '🌐', color: '#007aff', dock: false },
+      { id: 'store', name: 'App Store', icon: '🛍️', color: 'linear-gradient(135deg, #0575e6, #00f260)', dock: false },
+      { id: 'phone', name: 'Phone', icon: '📞', color: '#34c759', dock: true },
+      { id: 'messages', name: 'Messages', icon: '💬', color: '#ff3b30', dock: true },
+      { id: 'camera', name: 'Camera', icon: '📷', color: '#1a1a1a', dock: true },
+      { id: 'files', name: 'Files', icon: '📁', color: '#8e8e93', dock: true }
     ];
+
     const STORE_APPS = [
-      {id:'calendar',name:'Calendar',icon:'📅',color:'linear-gradient(160deg,#ef4444,#f97316)',desc:'Simple calendar and events demo.'},
-      {id:'games',name:'Mini Games',icon:'🎮',color:'linear-gradient(160deg,#22c55e,#14b8a6)',desc:'Tiny tap game for demo fun.'},
-      {id:'news',name:'News',icon:'📰',color:'linear-gradient(160deg,#64748b,#0f172a)',desc:'Local sample news cards.'},
-      {id:'reader',name:'Book Reader',icon:'📚',color:'linear-gradient(160deg,#f59e0b,#ec4899)',desc:'Story/PDF reader placeholder app.'}
+      { id: 'calendar', name: 'Calendar', icon: '📅', color: 'linear-gradient(135deg, #f093fb, #f5576c)', desc: 'Full calendar with event planner.' },
+      { id: 'games', name: 'Reflex Speed', icon: '🎮', color: 'linear-gradient(135deg, #11998e, #38ef7d)', desc: 'Canvas clicking speed game.' },
+      { id: 'news', name: 'News Grid', icon: '📰', color: 'linear-gradient(135deg, #1e3c72, #2a5298)', desc: 'Tech news search grid layout.' },
+      { id: 'reader', name: 'Reader', icon: '📚', color: 'linear-gradient(135deg, #ec008c, #fc6767)', desc: 'Story book and text file viewer.' }
     ];
-    const wallpapers = [
-      {name:'Ocean',css:'linear-gradient(135deg,#1fa2ff,#12d8fa,#a6ffcb)'},
-      {name:'Sunset',css:'linear-gradient(135deg,#ff6b6b,#ee5a24,#f093fb)'},
-      {name:'Forest',css:'linear-gradient(135deg,#11998e,#38ef7d)'},
-      {name:'Purple',css:'linear-gradient(135deg,#8E2DE2,#4A00E0)'},
-      {name:'Midnight',css:'linear-gradient(135deg,#232526,#414345)'},
-      {name:'Cotton',css:'linear-gradient(135deg,#a18cd1,#fbc2eb)'}
+
+    const wallPresets = [
+      { name: 'Ocean Blue', css: 'linear-gradient(135deg, #1fa2ff, #12d8fa, #a6ffcb)' },
+      { name: 'Aurora Sunset', css: 'linear-gradient(135deg, #ff6b6b, #ee5a24, #f093fb)' },
+      { name: 'Forest Chill', css: 'linear-gradient(135deg, #11998e, #38ef7d)' },
+      { name: 'Royal Velvet', css: 'linear-gradient(135deg, #8E2DE2, #4A00E0)' },
+      { name: 'Stealth Grey', css: 'linear-gradient(135deg, #232526, #414345)' },
+      { name: 'Neon Cotton', css: 'linear-gradient(135deg, #a18cd1, #fbc2eb)' }
     ];
-    let activeDevice='phone';
-    let panelApps={A:null,B:null};
-    let recentApps=JSON.parse(localStorage.getItem('deviceos-recents')||'[]');
-    let installedApps=JSON.parse(localStorage.getItem('deviceos-installed')||'[]');
-    let settings=JSON.parse(localStorage.getItem('deviceos-settings')||'{"wifi":true,"bluetooth":true,"airplane":false,"darkmode":false,"notifications":true,"volume":70,"brightness":100}');
-    let notifications=JSON.parse(localStorage.getItem('deviceos-notifications')||'[]');
-    let battery=85;
-    let audio=new Audio(), playlist=[], currentTrackIndex=-1, paintReady=false, paintUndo=[];
 
-    function $(id){return document.getElementById(id)}
-    function allApps(){ return [...BASE_APPS, ...STORE_APPS.filter(a=>installedApps.includes(a.id))]; }
-    function findApp(id){ return [...BASE_APPS,...STORE_APPS].find(a=>a.id===id) || BASE_APPS[0]; }
-    function appButton(app, extra=''){
-      return `<div class="app-icon ${extra}" onclick="openApp('${app.id}')"><div class="icon-box" style="background:${app.color};color:white">${app.icon}</div><div class="app-name">${app.name}</div></div>`;
-    }
-    function persist(){ localStorage.setItem('deviceos-settings',JSON.stringify(settings)); localStorage.setItem('deviceos-installed',JSON.stringify(installedApps)); localStorage.setItem('deviceos-recents',JSON.stringify(recentApps)); localStorage.setItem('deviceos-notifications',JSON.stringify(notifications)); }
+    // OS States
+    let activeDevice = 'phone';
+    let panelApps = { A: null, B: null };
+    let recentApps = JSON.parse(localStorage.getItem('deviceos-recents') || '[]');
+    let installedApps = JSON.parse(localStorage.getItem('deviceos-installed') || '[]');
+    let settings = JSON.parse(localStorage.getItem('deviceos-settings') || '{"wifi":true,"bluetooth":true,"airplane":false,"darkmode":false,"notifications":true,"volume":80,"brightness":100}');
+    let notifications = JSON.parse(localStorage.getItem('deviceos-notifications') || '[]');
+    let battery = 85;
 
-    function startDevice(type){
-      activeDevice=type;
-      $('landing').classList.add('hidden'); $('stage').classList.add('show'); $('topActions').classList.add('show');
-      $('deviceFrame').className='device-frame '+type; $('screen').className='screen '+type+(settings.darkmode?' dark':'');
-      $('deviceLabel').textContent=type==='phone'?'Phone Demo':'Tablet Demo';
-      renderHomeApps(); renderDock(); renderSidebar(); applySettingsUI(); addNotification('Welcome to DeviceOS 3.0', type==='phone'?'Phone simulator is ready.':'Tablet simulator is ready with sidebar and split view.');
-    }
-    function goSelector(){ closePanel('A'); closePanel('B'); $('stage').classList.remove('show'); $('topActions').classList.remove('show'); $('landing').classList.remove('hidden'); }
-    function switchDevice(){ startDevice(activeDevice==='phone'?'tablet':'phone'); }
-    function renderHomeApps(){
-      const q=($('homeSearch')?.value||'').toLowerCase();
-      const apps=allApps().filter(a=>!a.dock && (!q || a.name.toLowerCase().includes(q)));
-      $('appGrid').innerHTML=apps.map(a=>appButton(a)).join('');
-    }
-    function renderDock(){ $('dock').innerHTML=BASE_APPS.filter(a=>a.dock).map(a=>appButton(a)).join(''); }
-    function renderSidebar(){
-      const sidebar=$('tabletSidebar');
-      sidebar.innerHTML=`<button class="side-app" onclick="handleHomeBar()">🏠</button><button class="side-app" onclick="toggleNotifications()">🔔</button><button class="side-app" onclick="toggleControlCenter()">⚙️</button><button class="side-app" onclick="openRecents()">▦</button><div class="side-sep"></div>` + BASE_APPS.filter(a=>a.dock).map(a=>`<button class="side-app" onclick="openApp('${a.id}')">${a.icon}</button>`).join('');
+    // Web Audio & Graphics context
+    let audioObj = new Audio();
+    let playlist = [];
+    let currentTrackIdx = -1;
+    let repeatMode = false;
+    let shuffleMode = false;
+    let paintUndo = [];
+    let mapsInstances = {};
+    let gameInterval = null;
+
+    // Helpers
+    function $(id) { return document.getElementById(id); }
+    function allApps() { return [...BASE_APPS, ...STORE_APPS.filter(a => installedApps.includes(a.id))]; }
+    function findApp(id) { return [...BASE_APPS, ...STORE_APPS].find(a => a.id === id) || BASE_APPS[0]; }
+    function persist() {
+      localStorage.setItem('deviceos-settings', JSON.stringify(settings));
+      localStorage.setItem('deviceos-installed', JSON.stringify(installedApps));
+      localStorage.setItem('deviceos-recents', JSON.stringify(recentApps));
+      localStorage.setItem('deviceos-notifications', JSON.stringify(notifications));
     }
 
-    function openApp(id, panel){
-      const targetPanel = panel || (activeDevice==='tablet' && $('screen').classList.contains('split') && panelApps.A ? 'B' : 'A');
-      const app=findApp(id);
-      panelApps[targetPanel]=id;
-      $('title'+targetPanel).textContent=app.name;
-      $('content'+targetPanel).innerHTML=renderApp(id,targetPanel);
-      $('window'+targetPanel).classList.add('active');
-      if(targetPanel==='A' && activeDevice==='phone') $('windowB').classList.remove('active');
-      pushRecent(id); closeOverlays();
-      setTimeout(()=>afterRender(id,targetPanel),50);
-    }
-    function closePanel(panel){ $('window'+panel).classList.remove('active'); panelApps[panel]=null; if(panel==='B') $('screen').classList.remove('split'); }
-    function handleHomeBar(){ closePanel('A'); closePanel('B'); closeOverlays(); }
-    function toggleSplit(){ if(activeDevice!=='tablet') return; $('screen').classList.toggle('split'); if($('screen').classList.contains('split') && !panelApps.B) openApp('notes','B'); }
-    function pushRecent(id){ recentApps=[id,...recentApps.filter(x=>x!==id)].slice(0,8); persist(); }
+    // Global Device Initiator
+    function startDevice(type) {
+      activeDevice = type;
+      $('landing').classList.add('hidden');
+      $('stage').classList.add('show');
+      $('topActions').classList.add('show');
+      $('deviceFrame').className = 'device-frame ' + type;
+      $('screen').className = 'screen ' + type + (settings.darkmode ? ' dark' : '');
+      $('deviceLabel').textContent = type === 'phone' ? 'Phone Mode' : 'Tablet Mode';
+      
+      // Clean Panels
+      closePanel('A');
+      closePanel('B');
 
-    function renderApp(id,panel){
-      switch(id){
-        case 'weather': return weatherHTML();
-        case 'notes': return `<textarea id="notes-${panel}" placeholder="Type your notes here..."></textarea><div class="small muted" style="text-align:right">💾 Auto-saved locally</div>`;
-        case 'calc': return `<div class="calc-display" id="calc-display-${panel}">0</div><div class="calc-buttons" id="calc-buttons-${panel}"></div>`;
-        case 'settings': return settingsHTML();
-        case 'gallery': return galleryHTML();
-        case 'clock': return `<div class="clock-main"><div class="time" id="clockBig-${panel}">12:00</div><div class="date" id="clockDate-${panel}"></div></div><div class="card"><b>⏱️ Stopwatch</b><p class="muted small">Demo stopwatch placeholder. Add real timer logic later.</p></div>`;
-        case 'health': return `<div class="card"><h4 class="muted">Steps</h4><span class="big-number">8,432</span> steps</div><div class="card"><h4 class="muted">Heart</h4><span class="big-number">72</span> BPM</div><div class="card"><h4 class="muted">Sleep</h4><span class="big-number">7h 22m</span></div>`;
-        case 'maps': return `<iframe class="map-frame" src="https://www.openstreetmap.org/export/embed.html?bbox=88.3039%2C22.5326%2C88.4239%2C22.6126&layer=mapnik&marker=22.5726%2C88.3639"></iframe>`;
-        case 'paint': return paintHTML(panel);
-        case 'wallpaper': return wallpaperHTML();
-        case 'music': return musicHTML(panel);
-        case 'browser': return browserHTML(panel);
-        case 'phone': return `<div class="card"><div class="big-number">📞</div><h3>Phone</h3><p class="muted">Demo calling app.</p><button class="btn" onclick="addNotification('Fake Call','Calling Mom...')">Call Mom</button></div>`;
-        case 'messages': return `<div class="card"><h3>💬 Messages</h3><p><b>Arshad:</b> DeviceOS 3.0 is live!</p><p class="muted small">Demo messages only.</p></div>`;
-        case 'camera': return `<div class="card" style="text-align:center"><div style="font-size:70px">📷</div><h3>Camera Demo</h3><p class="muted">Browser camera can be added using getUserMedia permission.</p><button class="btn" onclick="addNotification('Camera','Photo saved to Gallery demo.')">Take Fake Photo</button></div>`;
-        case 'files': return filesHTML(panel);
-        case 'store': return storeHTML();
-        case 'calendar': return calendarHTML();
-        case 'games': return gamesHTML(panel);
-        case 'news': return newsHTML();
-        case 'reader': return readerHTML();
-        default: return `<div class="card">App not found.</div>`;
+      // Redraw Grids
+      renderHomeApps();
+      renderDock();
+      renderSidebar();
+      applySettingsUI();
+      
+      // Set Wallpaper
+      const savedWp = localStorage.getItem('deviceos-wallpaper');
+      if (savedWp) {
+        applyWallpaper(savedWp);
+      } else {
+        applyWallpaper(wallPresets[0].css);
+      }
+
+      addNotification('Welcome', type === 'phone' ? 'Virtual Phone OS booted.' : 'Virtual Tablet OS booted with Split View.');
+    }
+
+    function goSelector() {
+      closePanel('A');
+      closePanel('B');
+      closeOverlays();
+      if (audioObj) audioObj.pause();
+      $('stage').classList.remove('show');
+      $('topActions').classList.remove('show');
+      $('landing').classList.remove('hidden');
+    }
+
+    function switchDevice() {
+      startDevice(activeDevice === 'phone' ? 'tablet' : 'phone');
+    }
+
+    function renderHomeApps() {
+      const query = ($('homeSearch')?.value || '').toLowerCase();
+      const list = allApps().filter(a => !a.dock && (!query || a.name.toLowerCase().includes(query)));
+      $('appGrid').innerHTML = list.map(app => `
+        <div class="app-icon" onclick="openApp('${app.id}')">
+          <div class="icon-box" style="background:${app.color};color:#fff">${app.icon}</div>
+          <div class="app-name">${app.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderDock() {
+      $('dock').innerHTML = BASE_APPS.filter(a => a.dock).map(app => `
+        <div class="app-icon" onclick="openApp('${app.id}')">
+          <div class="icon-box" style="background:${app.color};color:#fff">${app.icon}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderSidebar() {
+      const side = $('tabletSidebar');
+      if (!side) return;
+      side.innerHTML = `
+        <button class="side-app" onclick="handleHomeBar()" title="Go Home">🏠</button>
+        <button class="side-app" onclick="toggleNotifications()" title="Notifications">🔔</button>
+        <button class="side-app" onclick="toggleControlCenter()" title="Control Center">⚙️</button>
+        <button class="side-app" onclick="openRecents()" title="App Switcher">▦</button>
+        <div class="side-sep"></div>
+      ` + BASE_APPS.filter(a => a.dock).map(a => `
+        <button class="side-app" onclick="openApp('${a.id}')" title="${a.name}">${a.icon}</button>
+      `).join('');
+    }
+
+    // Window panel navigation router
+    function openApp(id, targetPanel) {
+      let panel = targetPanel;
+      if (!panel) {
+        if (activeDevice === 'tablet' && $('screen').classList.contains('split') && panelApps.A) {
+          panel = 'B';
+        } else {
+          panel = 'A';
+        }
+      }
+
+      // Terminate any game interval when closing
+      if (panelApps[panel] === 'games') {
+        clearInterval(gameInterval);
+      }
+
+      panelApps[panel] = id;
+      const app = findApp(id);
+      
+      $('title' + panel).textContent = app.name;
+      $('content' + panel).innerHTML = renderAppHTML(id, panel);
+      $('window' + panel).classList.add('active');
+
+      // Phone doesn't support multitasking, close B
+      if (panel === 'A' && activeDevice === 'phone') {
+        closePanel('B');
+      }
+
+      pushRecent(id);
+      closeOverlays();
+      
+      // Async hooks bindings
+      setTimeout(() => afterRenderApp(id, panel), 60);
+    }
+
+    function closePanel(panel) {
+      if (panelApps[panel] === 'games') {
+        clearInterval(gameInterval);
+      }
+      $('window' + panel).classList.remove('active');
+      panelApps[panel] = null;
+      if (panel === 'B') {
+        $('screen').classList.remove('split');
       }
     }
-    function afterRender(id,panel){
-      if(id==='weather') fetchWeather(panel);
-      if(id==='notes'){ const el=$('notes-'+panel); el.value=localStorage.getItem('deviceos-notes')||''; el.oninput=()=>localStorage.setItem('deviceos-notes',el.value); }
-      if(id==='calc') buildCalc(panel);
-      if(id==='settings') bindSettings();
-      if(id==='clock') updateClocks();
-      if(id==='paint') setupPaint(panel);
-      if(id==='music') setupMusic(panel);
-      if(id==='files') setupFiles(panel);
-      if(id==='browser') setupBrowser(panel);
-      if(id==='wallpaper') bindWallpaper();
+
+    function handleHomeBar() {
+      closePanel('A');
+      closePanel('B');
+      closeOverlays();
     }
 
-    function weatherHTML(){ return `<div class="card" style="text-align:center"><div id="weatherIcon" style="font-size:76px">🌤️</div><div class="big-number" id="weatherTemp">--°</div><div id="weatherDesc" class="muted">Loading weather...</div></div><div class="grid3"><div class="card"><b id="weatherWind">--</b><br><span class="muted small">Wind</span></div><div class="card"><b id="weatherHum">--</b><br><span class="muted small">Humidity</span></div><div class="card"><b id="weatherCity">Kolkata</b><br><span class="muted small">City</span></div></div><div class="card small muted">Weather uses a no-key public weather endpoint. No private API key is stored in this file.</div>`; }
-    async function fetchWeather(){
-      const lat=22.5726, lon=88.3639;
-      try{
-        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`);
-        const d=await r.json(); const c=d.current || {};
-        const code=c.weather_code||0; const icon= code===0?'☀️': code<4?'⛅': code<60?'🌥️': code<80?'🌧️':'⛈️';
-        document.querySelectorAll('#weatherIcon').forEach(e=>e.textContent=icon);
-        document.querySelectorAll('#weatherTemp').forEach(e=>e.textContent=Math.round(c.temperature_2m||0)+'°');
-        document.querySelectorAll('#weatherDesc').forEach(e=>e.textContent='Live weather • Kolkata');
-        document.querySelectorAll('#weatherWind').forEach(e=>e.textContent=(c.wind_speed_10m||'--')+' km/h');
-        document.querySelectorAll('#weatherHum').forEach(e=>e.textContent=(c.relative_humidity_2m||'--')+'%');
-      }catch(e){ document.querySelectorAll('#weatherDesc').forEach(x=>x.textContent='Weather unavailable offline.'); }
+    function toggleSplit() {
+      if (activeDevice !== 'tablet') return;
+      $('screen').classList.toggle('split');
+      if ($('screen').classList.contains('split') && !panelApps.B) {
+        openApp('notes', 'B');
+      }
     }
 
-    function buildCalc(panel){
-      const cont=$('calc-buttons-'+panel); if(!cont || cont.dataset.ready) return; cont.dataset.ready='1';
-      const disp=$('calc-display-'+panel); let expr='', reset=false;
-      const keys=['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','.','='];
-      keys.forEach(k=>{ const b=document.createElement('button'); b.className='calc-btn '+(['÷','×','−','+','%'].includes(k)?'op':'')+(k==='='?' eq':'')+(k==='0'?' zero':''); b.textContent=k; b.onclick=()=>{
-        if(k==='C'){expr='';disp.textContent='0'} else if(k==='±'){expr=expr.startsWith('-')?expr.slice(1):'-'+expr;disp.textContent=expr||'0'} else if(k==='='){try{let ev=expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');let res=Function('"use strict";return ('+(ev||'0')+')')();expr=Number(res.toFixed(8)).toString();disp.textContent=expr;reset=true}catch(e){disp.textContent='Error';expr='';reset=true}} else { if(reset&&!['+','−','×','÷','%'].includes(k)){expr='';reset=false} expr+=k;disp.textContent=expr; }
-      }; cont.appendChild(b); });
+    function pushRecent(id) {
+      recentApps = [id, ...recentApps.filter(x => x !== id)].slice(0, 8);
+      persist();
     }
 
-    function settingsHTML(){
-      return `<div class="card"><div class="row"><div><h3>📱 DeviceOS 3.0</h3><p class="muted small">Phone + Tablet web simulator</p></div><b>Build 3.0.1</b></div></div>
-      <div class="card"><div class="row"><div><h3>💾 Storage</h3><p class="muted small">23.4 GB used of 64 GB</p></div><b>36%</b></div><div class="storage-bar"><div class="storage-fill" style="width:36%"></div></div><div class="storage-stack"><div class="stack-a" style="width:12%"></div><div class="stack-b" style="width:10%"></div><div class="stack-c" style="width:8%"></div><div class="stack-d" style="width:6%"></div></div><p class="small muted" style="margin-top:8px">System 8 GB • Apps 6.2 GB • Media 9.2 GB</p></div>
-      <ul class="settings-list">
-        ${settingRow('✈️ Airplane Mode','airplane')}${settingRow('📶 Wi‑Fi','wifi')}${settingRow('🔵 Bluetooth','bluetooth')}${settingRow('🌙 Dark Mode','darkmode')}${settingRow('🔔 Notifications','notifications')}
-      </ul>
-      <div class="card"><h3>About Phone</h3><p class="muted small">Model: DeviceOS Virtual Phone / Tablet<br>Domain: deviceos.in<br>Storage: Browser local storage + IndexedDB<br>Security: no weather API key exposed.</p></div>`;
+    // Overlays & drawers
+    function toggleNotifications() {
+      $('notificationDrawer').classList.toggle('open');
+      $('controlCenter').classList.remove('open');
+      $('recents').classList.remove('open');
+      renderNotifications();
     }
-    function settingRow(label,key){ return `<li><span>${label}</span><button class="toggle ${settings[key]?'on':''}" data-setting="${key}"></button></li>`; }
-    function bindSettings(){ document.querySelectorAll('[data-setting]').forEach(t=>{ t.onclick=(e)=>{e.stopPropagation();toggleSetting(t.dataset.setting)}; }); }
-    function toggleSetting(key){ settings[key]=!settings[key]; if(key==='airplane' && settings.airplane){settings.wifi=false;settings.bluetooth=false} persist(); applySettingsUI(); if(panelApps.A==='settings') openApp('settings','A'); if(panelApps.B==='settings') openApp('settings','B'); }
-    function applySettingsUI(){
-      $('screen').classList.toggle('dark',!!settings.darkmode);
-      $('wifiStatus').textContent=settings.wifi?'📶':'🚫'; $('btStatus').textContent=settings.bluetooth?'🔵':'⚫';
-      const map={airplane:'ccAirplane',wifi:'ccWifi',bluetooth:'ccBluetooth',darkmode:'ccDark'}; Object.keys(map).forEach(k=>$(map[k])?.classList.toggle('on',!!settings[k]));
-      setBrightness(settings.brightness||100,false); setVolume(settings.volume||70,false);
+
+    function toggleControlCenter() {
+      $('controlCenter').classList.toggle('open');
+      $('notificationDrawer').classList.remove('open');
+      $('recents').classList.remove('open');
     }
-    function setBrightness(v,save=true){ settings.brightness=Number(v); document.documentElement.style.setProperty('--brightness',v/100); $('brightnessValue').textContent=v+'%'; if($('brightnessRange')) $('brightnessRange').value=v; if(save) persist(); }
-    function setVolume(v,save=true){ settings.volume=Number(v); audio.volume=v/100; $('volumeValue').textContent=v+'%'; if($('volumeRange')) $('volumeRange').value=v; if(save) persist(); }
 
-    function galleryHTML(){ let imgs=''; for(let i=1;i<=12;i++) imgs+=`<img src="https://picsum.photos/240/240?random=${i+20}" alt="Gallery ${i}">`; return `<p class="small muted" style="margin-bottom:8px">Recents</p><div class="gallery-grid">${imgs}</div>`; }
-    function wallpaperHTML(){ return `<p class="muted small" style="margin-bottom:10px">Choose wallpaper</p><div class="wallpaper-grid">${wallpapers.map(w=>`<button class="wallpaper-option" data-wall="${encodeURIComponent(w.css)}" style="background:${w.css}"></button>`).join('')}</div><input type="file" id="wallInput" accept="image/*" style="margin-top:14px">`; }
-    function bindWallpaper(){ document.querySelectorAll('[data-wall]').forEach(b=>b.onclick=()=>applyWallpaper(decodeURIComponent(b.dataset.wall))); const inp=$('wallInput'); if(inp) inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>applyWallpaper(`url(${r.result})`);r.readAsDataURL(f)}; }
-    function applyWallpaper(css){ $('screen').style.setProperty('--wallpaper',css); localStorage.setItem('deviceos-wallpaper',css); }
-
-    function paintHTML(panel){ return `<div class="paint-tools"><input type="color" id="paintColor-${panel}" value="#111827"><input type="range" id="paintSize-${panel}" min="1" max="24" value="4"><select id="paintMode-${panel}"><option value="brush">Brush</option><option value="eraser">Eraser</option><option value="line">Line</option><option value="rect">Rectangle</option><option value="circle">Circle</option></select><button id="undoPaint-${panel}">Undo</button><button id="clearPaint-${panel}">Clear</button><button id="savePaint-${panel}">Save</button></div><div class="paint-wrap"><canvas class="paint-canvas" id="paintCanvas-${panel}" width="720" height="480"></canvas><div class="card"><h3>✨ Smart Suggestions</h3><p class="muted small">AutoDraw-style demo. Draw anything, then tap a clean symbol.</p><div class="suggestions" id="suggestions-${panel}">${['☀️','❤️','⭐','🏠','➡️','🌳','🚗','🐱'].map(x=>`<button onclick="stampPaint('${panel}','${x}')">${x}</button>`).join('')}</div></div></div>`; }
-    function setupPaint(panel){
-      const canvas=$('paintCanvas-'+panel); if(!canvas || canvas.dataset.ready) return; canvas.dataset.ready='1'; const ctx=canvas.getContext('2d'); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); let drawing=false,start=null,snapshot=null;
-      function pos(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}; }
-      function save(){ paintUndo.push(canvas.toDataURL()); if(paintUndo.length>30) paintUndo.shift(); }
-      canvas.onpointerdown=e=>{drawing=true; canvas.setPointerCapture(e.pointerId); save(); start=pos(e); snapshot=ctx.getImageData(0,0,canvas.width,canvas.height); ctx.beginPath(); ctx.moveTo(start.x,start.y);};
-      canvas.onpointermove=e=>{ if(!drawing)return; const p=pos(e), mode=$('paintMode-'+panel).value, size=$('paintSize-'+panel).value, color=$('paintColor-'+panel).value; ctx.lineWidth=size; ctx.strokeStyle=mode==='eraser'?'#fff':color; ctx.fillStyle=color; if(['line','rect','circle'].includes(mode)){ ctx.putImageData(snapshot,0,0); ctx.beginPath(); if(mode==='line'){ctx.moveTo(start.x,start.y);ctx.lineTo(p.x,p.y);ctx.stroke()} if(mode==='rect'){ctx.strokeRect(start.x,start.y,p.x-start.x,p.y-start.y)} if(mode==='circle'){const rad=Math.hypot(p.x-start.x,p.y-start.y);ctx.arc(start.x,start.y,rad,0,Math.PI*2);ctx.stroke()} } else { ctx.lineTo(p.x,p.y); ctx.stroke(); }};
-      canvas.onpointerup=()=>{drawing=false; addNotification('Smart Paint','Drawing updated. Try the smart suggestions.')};
-      $('clearPaint-'+panel).onclick=()=>{save();ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height)};
-      $('undoPaint-'+panel).onclick=()=>{const last=paintUndo.pop(); if(!last)return; const img=new Image(); img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0)}; img.src=last;};
-      $('savePaint-'+panel).onclick=()=>{const a=document.createElement('a');a.href=canvas.toDataURL();a.download='deviceos-drawing.png';a.click();};
+    function openRecents() {
+      $('recents').classList.add('open');
+      $('controlCenter').classList.remove('open');
+      $('notificationDrawer').classList.remove('open');
+      renderRecents();
     }
-    function stampPaint(panel,emoji){ const canvas=$('paintCanvas-'+panel); if(!canvas)return; const ctx=canvas.getContext('2d'); paintUndo.push(canvas.toDataURL()); ctx.font='90px Arial'; ctx.fillText(emoji, canvas.width/2-45, canvas.height/2+35); addNotification('Smart Suggestion',emoji+' added to drawing.'); }
 
-    function musicHTML(panel){ return `<div class="card"><input type="file" id="musicInput-${panel}" accept="audio/*" multiple><p class="muted small" style="margin-top:8px">Upload local audio files. They play inside your browser only.</p></div><div class="card"><div class="music-controls"><button onclick="prevTrack()">⏮️</button><button id="playBtn-${panel}" onclick="toggleMusic()">▶️</button><button onclick="nextTrack()">⏭️</button></div><p style="text-align:center;margin-top:10px">Now: <b id="currentTrack-${panel}">None</b></p></div><div class="playlist" id="playlist-${panel}"></div>`; }
-    function setupMusic(panel){ const input=$('musicInput-'+panel); if(input) input.onchange=e=>{Array.from(e.target.files).forEach(file=>playlist.push({name:file.name,url:URL.createObjectURL(file)})); renderPlaylist(panel); if(currentTrackIndex<0) playTrack(0);}; renderPlaylist(panel); }
-    function renderPlaylist(panel){ const pl=$('playlist-'+panel); if(!pl)return; pl.innerHTML=playlist.map((t,i)=>`<div class="track ${i===currentTrackIndex?'active':''}" onclick="playTrack(${i})">🎵 ${t.name}</div>`).join(''); const ct=$('currentTrack-'+panel); if(ct) ct.textContent=playlist[currentTrackIndex]?.name||'None'; }
-    function playTrack(i){ if(i<0||i>=playlist.length)return; currentTrackIndex=i; audio.src=playlist[i].url; audio.play(); document.querySelectorAll('[id^="currentTrack-"]').forEach(x=>x.textContent=playlist[i].name); document.querySelectorAll('[id^="playlist-"]').forEach(x=>{ const panel=x.id.split('-')[1]; renderPlaylist(panel);}); }
-    function toggleMusic(){ if(audio.paused) audio.play(); else audio.pause(); }
-    function prevTrack(){ playTrack(currentTrackIndex-1); } function nextTrack(){ playTrack(currentTrackIndex+1); }
+    function closeRecents() {
+      $('recents').classList.remove('open');
+    }
 
-    function browserHTML(panel){ return `<div class="browser-bar"><input id="browserInput-${panel}" placeholder="Search or enter URL"><button class="btn" onclick="browserGo('${panel}')">Go</button></div><div class="quick-links"><button onclick="quickOpen('https://www.google.com')">Google</button><button onclick="quickOpen('https://www.wikipedia.org')">Wikipedia</button><button onclick="quickOpen('https://www.youtube.com')">YouTube</button><button onclick="quickOpen('https://www.autodraw.com/')">AutoDraw</button></div><div class="browser-frame" id="browserFrame-${panel}"><div><h3>🌐 Better Browser</h3><p>Some websites block iframe loading, so this browser safely opens pages in a new tab.</p></div></div>`; }
-    function setupBrowser(panel){ const inp=$('browserInput-'+panel); if(inp) inp.onkeydown=e=>{if(e.key==='Enter')browserGo(panel)}; }
-    function browserGo(panel){ const q=$('browserInput-'+panel).value.trim(); if(!q)return; let url=q; if(!/^https?:\/\//i.test(url)){ if(q.includes('.')) url='https://'+q; else url='https://www.google.com/search?q='+encodeURIComponent(q); } window.open(url,'_blank'); addNotification('Browser','Opened '+url); }
-    function quickOpen(url){ window.open(url,'_blank'); }
+    function closeOverlays() {
+      $('notificationDrawer').classList.remove('open');
+      $('controlCenter').classList.remove('open');
+      $('recents').classList.remove('open');
+    }
 
-    function storeHTML(){ return `<div class="store-grid">${STORE_APPS.map(app=>{const on=installedApps.includes(app.id);return `<div class="store-card"><div class="store-icon">${app.icon}</div><h4>${app.name}</h4><p>${app.desc}</p><button class="btn ${on?'danger':''}" onclick="toggleInstall('${app.id}')">${on?'Remove':'Install'}</button></div>`}).join('')}</div>`; }
-    function toggleInstall(id){ if(installedApps.includes(id)){installedApps=installedApps.filter(x=>x!==id); addNotification('App Store','App removed.')} else {installedApps.push(id); addNotification('App Store','App installed.')} persist(); renderHomeApps(); if(panelApps.A==='store')openApp('store','A'); if(panelApps.B==='store')openApp('store','B'); }
+    function addNotification(title, msg) {
+      if (!settings.notifications) return;
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      notifications = [{ title, msg, time }, ...notifications].slice(0, 10);
+      persist();
+      renderNotifications();
+    }
 
-    function filesHTML(panel){ return `<div class="file-drop"><h3>📁 File Manager</h3><p class="muted small">Upload files here. They are saved in browser IndexedDB.</p><input type="file" id="fileInput-${panel}" multiple></div><div class="file-list" id="fileList-${panel}"><div class="muted small">Loading files...</div></div>`; }
-    function openDB(){ return new Promise((resolve,reject)=>{ const req=indexedDB.open('DeviceOSFiles',1); req.onupgradeneeded=()=>req.result.createObjectStore('files',{keyPath:'id'}); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
-    async function saveFileObj(file){ const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').put({id:Date.now()+'-'+file.name,name:file.name,type:file.type,size:file.size,blob:file,created:new Date().toISOString()}); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); }
-    async function getFiles(){ const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('files','readonly'); const req=tx.objectStore('files').getAll(); req.onsuccess=()=>resolve(req.result||[]); req.onerror=()=>reject(req.error); }); }
-    async function deleteFileObj(id){ const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction('files','readwrite'); tx.objectStore('files').delete(id); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); }
-    async function setupFiles(panel){ const input=$('fileInput-'+panel); if(input) input.onchange=async e=>{ for(const f of Array.from(e.target.files)) await saveFileObj(f); addNotification('Files','File uploaded to local File Manager.'); renderFiles(panel);}; renderFiles(panel); }
-    async function renderFiles(panel){ const box=$('fileList-'+panel); if(!box)return; try{ const files=await getFiles(); if(!files.length){box.innerHTML='<div class="card muted small">No files yet. Upload any PDF, image, audio, or document.</div>';return;} box.innerHTML=files.map(f=>`<div class="file-item"><div><strong>${escapeHTML(f.name)}</strong><span>${formatSize(f.size)} • ${new Date(f.created).toLocaleString()}</span></div><div><button class="pill-btn" onclick="downloadFile('${f.id}')">Open</button> <button class="pill-btn danger" onclick="removeFile('${f.id}','${panel}')">Del</button></div></div>`).join(''); }catch(e){box.innerHTML='<div class="card muted small">File storage not supported in this browser.</div>';} }
-    async function downloadFile(id){ const files=await getFiles(); const f=files.find(x=>x.id===id); if(!f)return; const url=URL.createObjectURL(f.blob); window.open(url,'_blank'); }
-    async function removeFile(id,panel){ await deleteFileObj(id); renderFiles(panel); }
-    function formatSize(n){ if(n<1024)return n+' B'; if(n<1024*1024)return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; } function escapeHTML(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+    function renderNotifications() {
+      const list = $('notificationList');
+      if (!list) return;
+      if (!notifications.length) {
+        list.innerHTML = `
+          <div class="notification">
+            <strong>All caught up</strong>
+            <span>No new notifications at this time.</span>
+          </div>
+        `;
+        return;
+      }
+      list.innerHTML = notifications.map(n => `
+        <div class="notification">
+          <strong>${escapeHTML(n.title)}</strong>
+          <span>${escapeHTML(n.msg)}<br><small class="muted">${n.time}</small></span>
+        </div>
+      `).join('');
+    }
 
-    function calendarHTML(){ const now=new Date(); return `<div class="card" style="text-align:center"><div style="font-size:54px">📅</div><h2>${now.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</h2><p class="muted">Today is ${now.toLocaleDateString('en-US',{weekday:'long',day:'numeric'})}</p></div><div class="card"><b>Demo Event</b><p class="muted small">Website update and Netlify deploy.</p></div>`; }
-    function gamesHTML(panel){ return `<div class="card" style="text-align:center"><h3>🎮 Tap Game</h3><p class="muted small">Tap the button as many times as you can.</p><div class="big-number" id="score-${panel}">0</div><button class="btn" onclick="incScore('${panel}')">Tap</button></div>`; }
-    function incScore(panel){ const e=$('score-'+panel); e.textContent=Number(e.textContent)+1; }
-    function newsHTML(){ return `<div class="card"><h3>📰 DeviceOS News</h3><p class="muted">DeviceOS 3.0 adds phone + tablet selector, app store, smart paint, files, and control center.</p></div><div class="card"><h3>🌐 Hosting</h3><p class="muted">Deploy this single index.html on Netlify, Firebase Hosting, or normal cPanel hosting.</p></div>`; }
-    function readerHTML(){ return `<div class="card"><h3>📚 Book Reader</h3><p class="muted">Use this app later for your kids story/PDF reader project.</p><input type="file" accept="application/pdf,audio/*,image/*" multiple><p class="small muted" style="margin-top:8px">Next upgrade: PDF.js viewer + audio narration + Firebase/admin upload.</p></div>`; }
+    function clearNotifications() {
+      notifications = [];
+      persist();
+      renderNotifications();
+    }
 
-    function toggleNotifications(){ $('notificationDrawer').classList.toggle('open'); $('controlCenter').classList.remove('open'); $('recents').classList.remove('open'); renderNotifications(); }
-    function toggleControlCenter(){ $('controlCenter').classList.toggle('open'); $('notificationDrawer').classList.remove('open'); $('recents').classList.remove('open'); }
-    function closeOverlays(){ $('notificationDrawer').classList.remove('open'); $('controlCenter').classList.remove('open'); $('recents').classList.remove('open'); }
-    function addNotification(title,msg){ if(!settings.notifications)return; notifications=[{title,msg,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})},...notifications].slice(0,12); persist(); renderNotifications(); }
-    function renderNotifications(){ const box=$('notificationList'); if(!notifications.length){box.innerHTML='<div class="notification"><strong>No notifications</strong><span>You are all caught up.</span></div>';return;} box.innerHTML=notifications.map(n=>`<div class="notification"><strong>${n.title}</strong><span>${n.msg}<br>${n.time}</span></div>`).join(''); }
-    function clearNotifications(){ notifications=[]; persist(); renderNotifications(); }
-    function openRecents(){ $('recents').classList.add('open'); $('controlCenter').classList.remove('open'); $('notificationDrawer').classList.remove('open'); renderRecents(); }
-    function closeRecents(){ $('recents').classList.remove('open'); }
-    function renderRecents(){ const grid=$('recentGrid'); if(!recentApps.length){grid.innerHTML='<div class="notification"><strong>No recent apps</strong><span>Open apps to see them here.</span></div>';return;} grid.innerHTML=recentApps.map(id=>{const a=findApp(id);return `<button class="recent-card" onclick="openApp('${id}');closeRecents();"><span class="emoji">${a.icon}</span><strong>${a.name}</strong><span class="muted small">Tap to reopen</span></button>`}).join(''); }
+    function renderRecents() {
+      const grid = $('recentGrid');
+      if (!grid) return;
+      if (!recentApps.length) {
+        grid.innerHTML = '<div class="notification"><strong>No recents</strong><span>Launch some apps!</span></div>';
+        return;
+      }
+      grid.innerHTML = recentApps.map(id => {
+        const app = findApp(id);
+        return `
+          <button class="recent-card" onclick="openApp('${id}'); closeRecents();">
+            <span class="emoji">${app.icon}</span>
+            <strong>${app.name}</strong>
+            <span class="muted small">Reopen app</span>
+          </button>
+        `;
+      }).join('');
+    }
 
-    function updateClocks(){ const now=new Date(); const t=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); $('statusTime').textContent=t; document.querySelectorAll('[id^="clockBig-"]').forEach(e=>e.textContent=t); document.querySelectorAll('[id^="clockDate-"]').forEach(e=>e.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})); }
-    setInterval(updateClocks,1000); updateClocks();
-    setInterval(()=>{ if(battery>0) battery--; $('batteryPct').textContent=battery; $('batteryFill').style.width=battery+'%'; },60000);
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape') handleHomeBar(); });
-    const savedWp=localStorage.getItem('deviceos-wallpaper'); if(savedWp) setTimeout(()=>applyWallpaper(savedWp),50);
-    applySettingsUI(); renderNotifications();
+    // Settings managers
+    function toggleSetting(key) {
+      settings[key] = !settings[key];
+      if (key === 'airplane' && settings.airplane) {
+        settings.wifi = false;
+        settings.bluetooth = false;
+      }
+      persist();
+      applySettingsUI();
+      // Redraw if currently running settings panel
+      if (panelApps.A === 'settings') openApp('settings', 'A');
+      if (panelApps.B === 'settings') openApp('settings', 'B');
+    }
+
+    function applySettingsUI() {
+      $('screen').classList.toggle('dark', !!settings.darkmode);
+      $('wifiStatus').textContent = settings.wifi ? '📶' : '🚫';
+      $('btStatus').textContent = settings.bluetooth ? '🔵' : '⚫';
+      
+      const map = { airplane: 'ccAirplane', wifi: 'ccWifi', bluetooth: 'ccBluetooth', darkmode: 'ccDark' };
+      Object.keys(map).forEach(k => {
+        const el = $(map[k]);
+        if (el) el.classList.toggle('on', !!settings[k]);
+      });
+
+      setBrightness(settings.brightness || 100, false);
+      setVolume(settings.volume || 80, false);
+    }
+
+    function setBrightness(v, save = true) {
+      settings.brightness = Number(v);
+      document.documentElement.style.setProperty('--brightness', v / 100);
+      const text = $('brightnessValue');
+      if (text) text.textContent = v + '%';
+      const range = $('brightnessRange');
+      if (range) range.value = v;
+      if (save) persist();
+    }
+
+    function setVolume(v, save = true) {
+      settings.volume = Number(v);
+      audioObj.volume = v / 100;
+      const text = $('volumeValue');
+      if (text) text.textContent = v + '%';
+      const range = $('volumeRange');
+      if (range) range.value = v;
+      if (save) persist();
+    }
+
+    function applyWallpaper(css) {
+      $('screen').style.setProperty('--wallpaper', css);
+      localStorage.setItem('deviceos-wallpaper', css);
+    }
+
+    // Lightbox triggers
+    function openLightbox(url) {
+      $('lightboxImg').src = url;
+      $('lightbox').style.display = 'flex';
+    }
+    function closeLightbox() {
+      $('lightbox').style.display = 'none';
+    }
+
+    // ============================================================================
+    //  App HTML Templates
+    // ============================================================================
+    function renderAppHTML(id, panel) {
+      switch (id) {
+        case 'weather':
+          return `
+            <div class="card" style="text-align:center">
+              <div id="weatherIcon-${panel}" style="font-size: 76px; margin: 10px 0;">🌤️</div>
+              <div class="big-number" id="weatherTemp-${panel}">--°C</div>
+              <div id="weatherDesc-${panel}" class="muted" style="font-weight:700">Loading forecast...</div>
+            </div>
+            <div class="grid3">
+              <div class="card">
+                <b id="weatherWind-${panel}">--</b><br>
+                <span class="muted small">Wind</span>
+              </div>
+              <div class="card">
+                <b id="weatherHum-${panel}">--</b><br>
+                <span class="muted small">Humidity</span>
+              </div>
+              <div class="card">
+                <b id="weatherCity-${panel}">Kolkata</b><br>
+                <span class="muted small">Station</span>
+              </div>
+            </div>
+            <div id="forecastRow-${panel}" style="display:flex; justify-content:space-between; gap:6px; margin-top:8px"></div>
+            <div class="card small muted" style="margin-top: 14px">Uses live Open-Meteo REST service coordinates endpoint.</div>
+          `;
+
+        case 'notes':
+          return `
+            <textarea id="notes-${panel}" placeholder="Start jotting notes here..."></textarea>
+            <div class="row small muted" style="margin-top: 8px;">
+              <span id="notesSaving-${panel}">💾 Document saved</span>
+              <span>In-browser local storage</span>
+            </div>
+          `;
+
+        case 'calc':
+          return `
+            <div class="calc-display" id="calcDisplay-${panel}">0</div>
+            <div class="calc-buttons" id="calcButtons-${panel}"></div>
+          `;
+
+        case 'settings':
+          return `
+            <div class="card">
+              <div class="row">
+                <div>
+                  <h3 style="font-weight:800">📱 DeviceOS Virtual</h3>
+                  <p class="muted small">Virtual Simulator Environment</p>
+                </div>
+                <b style="color:var(--primary)">Build 3.0.2</b>
+              </div>
+            </div>
+            <div class="card">
+              <div class="row">
+                <div>
+                  <h3>💾 Local Storage</h3>
+                  <p class="muted small">Used space: 24.2 GB of 64 GB</p>
+                </div>
+                <b style="color:var(--orange)">37%</b>
+              </div>
+              <div class="storage-bar">
+                <div class="storage-fill" style="width: 37%"></div>
+              </div>
+              <div class="storage-stack">
+                <div class="stack-a" style="width: 14%"></div>
+                <div class="stack-b" style="width: 11%"></div>
+                <div class="stack-c" style="width: 8%"></div>
+                <div class="stack-d" style="width: 4%"></div>
+              </div>
+              <p class="small muted" style="margin-top:8px">System: 9 GB • Apps: 7 GB • Files: 5.2 GB • Other: 3 GB</p>
+            </div>
+            <ul class="settings-list">
+              <li>
+                <span>✈️ Airplane Mode</span>
+                <button class="toggle ${settings.airplane ? 'on' : ''}" onclick="toggleSetting('airplane')"></button>
+              </li>
+              <li>
+                <span>📶 Wi-Fi Wireless</span>
+                <button class="toggle ${settings.wifi ? 'on' : ''}" onclick="toggleSetting('wifi')"></button>
+              </li>
+              <li>
+                <span>🔵 Bluetooth Connection</span>
+                <button class="toggle ${settings.bluetooth ? 'on' : ''}" onclick="toggleSetting('bluetooth')"></button>
+              </li>
+              <li>
+                <span>🌙 Dark Theme Scheme</span>
+                <button class="toggle ${settings.darkmode ? 'on' : ''}" onclick="toggleSetting('darkmode')"></button>
+              </li>
+              <li>
+                <span>🔔 Push Notifications</span>
+                <button class="toggle ${settings.notifications ? 'on' : ''}" onclick="toggleSetting('notifications')"></button>
+              </li>
+            </ul>
+            <div class="card" style="margin-top: 14px">
+              <h3>Virtual Specifications</h3>
+              <p class="muted small" style="margin-top: 4px;">
+                Host Context: Browser Agent<br>
+                Database Store: IndexedDB & Window Storage<br>
+                Secure Geolocation: Yes (Leaflet / Fallbacks)
+              </p>
+            </div>
+          `;
+
+        case 'gallery':
+          return `
+            <p class="muted small" style="margin-bottom:8px">Images fetched from Picsum photos API</p>
+            <div class="gallery-grid" id="galleryGrid-${panel}"></div>
+          `;
+
+        case 'clock':
+          return `
+            <div class="clock-main">
+              <div class="time" id="clockText-${panel}">12:00:00 PM</div>
+              <div class="date" id="clockDate-${panel}">Saturday, May 23</div>
+            </div>
+            <div class="card">
+              <div class="row">
+                <h4>⏱️ Virtual Stopwatch</h4>
+                <div style="font-size:24px; font-weight:700" id="swTime-${panel}">00:00.00</div>
+              </div>
+              <div class="row" style="margin-top:12px; gap:8px">
+                <button class="btn" id="swStart-${panel}">Start</button>
+                <button class="btn secondary" id="swLap-${panel}">Lap</button>
+                <button class="btn secondary danger" id="swReset-${panel}">Reset</button>
+              </div>
+              <div id="swLaps-${panel}" style="margin-top:12px; max-height:100px; overflow-y:auto; font-size:12px; display:grid; gap:4px"></div>
+            </div>
+          `;
+
+        case 'health':
+          return `
+            <div class="card">
+              <h4 class="muted">Daily Step Counter</h4>
+              <div class="row" style="align-items:flex-end">
+                <span class="big-number">9,182</span>
+                <span class="muted small" style="margin-bottom:6px">Steps / Goal: 10,000</span>
+              </div>
+              <div class="storage-bar" style="margin-top:8px"><div class="storage-fill" style="width: 91.8%"></div></div>
+            </div>
+            <div class="grid2">
+              <div class="card">
+                <h4 class="muted">Active Pulser</h4>
+                <span class="big-number" style="color:var(--red)">74</span> <span class="muted small">BPM</span>
+              </div>
+              <div class="card">
+                <h4 class="muted">Sleep Index</h4>
+                <span class="big-number" style="color:var(--purple)">7.8</span> <span class="muted small">Hours</span>
+              </div>
+            </div>
+            <div class="card">
+              <h4 class="muted">Energy Expenditure</h4>
+              <span class="big-number" style="color:var(--orange)">2,145</span> <span class="muted small">kCal</span>
+            </div>
+          `;
+
+        case 'maps':
+          return `
+            <div style="position:relative; width:100%; height:100%">
+              <div id="map-${panel}" class="map-frame"></div>
+              <button class="btn" id="mapLocate-${panel}" style="position:absolute; bottom:14px; right:14px; z-index:1000; border-radius:50%; width:44px; height:44px; padding:0; font-size:18px">📍</button>
+            </div>
+          `;
+
+        case 'paint':
+          return `
+            <div class="paint-tools">
+              <input type="color" id="paintColor-${panel}" value="#0070c0" title="Brush Color">
+              <select id="paintMode-${panel}">
+                <option value="brush">🖌️ Spray Brush</option>
+                <option value="pen">✏️ Solid Pen</option>
+                <option value="eraser">🧼 Eraser</option>
+                <option value="line">╱ Straight Line</option>
+                <option value="rect">▭ Rectangle</option>
+                <option value="circle">○ Circle</option>
+              </select>
+              <div style="display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--border); padding:4px 8px; border-radius:10px">
+                <span class="small muted">Size</span>
+                <input type="range" id="paintSize-${panel}" min="2" max="40" value="8" style="width:60px; accent-color:var(--primary)">
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--border); padding:4px 8px; border-radius:10px">
+                <span class="small muted">Opacity</span>
+                <input type="range" id="paintOpacity-${panel}" min="10" max="100" value="100" style="width:60px; accent-color:var(--primary)">
+              </div>
+              <button id="undoPaint-${panel}">↩️ Undo</button>
+              <button id="clearPaint-${panel}">🗑️ Clear</button>
+              <button id="savePaint-${panel}">💾 Save</button>
+            </div>
+            <div class="paint-wrap">
+              <canvas class="paint-canvas" id="paintCanvas-${panel}"></canvas>
+              <div class="card" style="padding:12px">
+                <h4 style="margin-bottom:6px">✨ Stamp presets</h4>
+                <p class="muted small" style="margin-bottom:8px">Draw, then tap a symbol to stamp at center.</p>
+                <div class="suggestions" id="suggestions-${panel}">
+                  ${['☀️','⭐','❤️','🏠','🌳','🐱','🚗','💡','🎯','🔥'].map(emoji => `
+                    <button onclick="stampPaint('${panel}','${emoji}')">${emoji}</button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+
+        case 'wallpaper':
+          return `
+            <p class="muted small" style="margin-bottom:12px">Select visual interface background:</p>
+            <div class="wallpaper-grid" id="wallpaperGrid-${panel}"></div>
+            <div class="card" style="margin-top:14px">
+              <h4>Custom Photo Upload</h4>
+              <input type="file" id="wallInput-${panel}" accept="image/*" style="margin-top:8px" />
+              <p class="small muted" style="margin-top:6px">Encodes upload as Local Base64 string.</p>
+            </div>
+          `;
+
+        case 'music':
+          return `
+            <div class="card" style="padding: 12px 16px 8px">
+              <div class="music-album-art" id="musicArt-${panel}">🎵</div>
+              <h4 id="musicTitle-${panel}" style="text-align:center; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">No tracks loaded</h4>
+              <p id="musicArtist-${panel}" class="muted small" style="text-align:center; margin-bottom:10px">Tap '+' to import files</p>
+              <div class="music-progress" id="musicBar-${panel}" onclick="seekTrack(event, '${panel}')">
+                <div class="music-progress-fill" id="musicFill-${panel}"></div>
+              </div>
+              <div class="row small muted" style="margin-bottom:4px">
+                <span id="musicTimeCur-${panel}">0:00</span>
+                <span id="musicTimeDur-${panel}">0:00</span>
+              </div>
+            </div>
+            <div class="music-controls">
+              <button onclick="toggleMusicShuffle('${panel}')" id="musicShuffle-${panel}" title="Shuffle">🔀</button>
+              <button onclick="prevTrack('${panel}')" title="Previous">⏮️</button>
+              <button class="btn" id="musicPlayBtn-${panel}" onclick="toggleMusicPlayback('${panel}')" style="width:48px; height:48px; border-radius:50%; font-size:18px; padding:0">▶</button>
+              <button onclick="nextTrack('${panel}')" title="Next">⏭️</button>
+              <button onclick="toggleMusicRepeat('${panel}')" id="musicRepeat-${panel}" title="Repeat">🔁</button>
+            </div>
+            <div class="card" style="margin-top:14px; padding: 12px">
+              <input type="file" id="musicFiles-${panel}" accept="audio/*" multiple style="width:100%" />
+              <p class="small muted" style="margin-top:6px">Browser client-side player only.</p>
+            </div>
+            <div class="playlist" id="playlistBox-${panel}"></div>
+          `;
+
+        case 'browser':
+          return `
+            <div class="browser-bar">
+              <input id="browserInput-${panel}" placeholder="Enter web URL address (e.g. google.com)" />
+              <button class="btn" onclick="browserGo('${panel}')">Navigate</button>
+            </div>
+            <div class="quick-links">
+              <button onclick="quickOpenBrowser('https://www.google.com')">Google</button>
+              <button onclick="quickOpenBrowser('https://www.wikipedia.org')">Wikipedia</button>
+              <button onclick="quickOpenBrowser('https://www.youtube.com')">YouTube</button>
+              <button onclick="quickOpenBrowser('https://www.autodraw.com')">AutoDraw</button>
+            </div>
+            <div class="browser-frame">
+              <div>
+                <div style="font-size:44px; margin-bottom:10px">🌐</div>
+                <h3 style="color:var(--screen-text)">Sandboxed IFrame Guard</h3>
+                <p style="margin-top:6px">Many sites block loading within IFrames (via X-Frame Headers). For secure execution, URLs open in a safe external browser tab.</p>
+              </div>
+            </div>
+          `;
+
+        case 'store':
+          return `
+            <h3 style="margin-bottom:12px">🛍️ Application Store</h3>
+            <div class="store-grid" id="storeGrid-${panel}"></div>
+          `;
+
+        case 'phone':
+          return `
+            <div class="card">
+              <h3>Favorites</h3>
+              <div class="row" style="margin-top:10px; justify-content:flex-start; gap:16px">
+                <button class="btn secondary" onclick="simulateCall('Mom')">👩 Mom</button>
+                <button class="btn secondary" onclick="simulateCall('Dad')">👨 Dad</button>
+                <button class="btn secondary" onclick="simulateCall('Friend')">👦 Friend</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Recent History</h3>
+              <div style="margin-top:10px; display:grid; gap:8px; font-size:13px">
+                <div class="row"><span>📞 Mom (Incoming)</span><span class="muted">10:45 AM</span></div>
+                <div class="row"><span>📞 Dad (Outgoing)</span><span class="muted">Yesterday</span></div>
+                <div class="row"><span style="color:var(--red)">📞 Friend (Missed)</span><span class="muted">Thursday</span></div>
+              </div>
+            </div>
+          `;
+
+        case 'messages':
+          return `
+            <div class="card" style="padding:0">
+              <div style="padding:14px; border-bottom:1px solid var(--border)">
+                <strong>Arshad</strong>
+                <p class="muted small">Hey, is DeviceOS 3.0 ready to test? — Just now</p>
+              </div>
+              <div style="padding:14px; border-bottom:1px solid var(--border)">
+                <strong>Mom</strong>
+                <p class="muted small">Don't forget to eat dinner. — 2 hours ago</p>
+              </div>
+              <div style="padding:14px">
+                <strong>Tech Service</strong>
+                <p class="muted small">OTP code: 9812. Expiring in 5m. — Yesterday</p>
+              </div>
+            </div>
+          `;
+
+        case 'camera':
+          return `
+            <div class="card" style="text-align:center; padding:32px 16px">
+              <div style="font-size:72px; margin-bottom:14px">📸</div>
+              <h3>Camera Feed Simulator</h3>
+              <p class="muted small" style="margin-bottom:18px">Simulates lens capturing. Takes screenshot frame and writes directly to Gallery database.</p>
+              <button class="btn" onclick="takeVirtualPhoto()">Capture Frame</button>
+            </div>
+          `;
+
+        case 'files':
+          return `
+            <div class="file-drop" id="fileDrop-${panel}">
+              <div style="font-size:28px">📤</div>
+              <strong>Drag & Drop Files Here</strong>
+              <p class="muted small">Or click to select. Persisted in Browser IndexedDB.</p>
+              <input type="file" id="fileInput-${panel}" multiple style="display:none" />
+            </div>
+            <div class="file-list" id="fileList-${panel}"></div>
+          `;
+
+        case 'calendar':
+          return `
+            <div class="card">
+              <div class="row">
+                <h3 id="calHeader-${panel}">Calendar</h3>
+                <button class="pill-btn" onclick="addCalendarEvent('${panel}')">➕ Add Memo</button>
+              </div>
+              <div class="calendar-grid" id="calGrid-${panel}"></div>
+            </div>
+            <div class="card">
+              <h4>Your Events Memo</h4>
+              <div id="calEvents-${panel}" style="margin-top:8px; display:grid; gap:6px; font-size:12px"></div>
+            </div>
+          `;
+
+        case 'games':
+          return `
+            <div class="card" style="padding:10px">
+              <div class="row">
+                <h4>🎯 Target Click Speed</h4>
+                <div>Score: <strong id="gameScore-${panel}">0</strong> | High: <strong id="gameHigh-${panel}">0</strong></div>
+              </div>
+            </div>
+            <canvas class="game-canvas" id="gameCanvas-${panel}"></canvas>
+            <div class="row" style="margin-top:10px">
+              <button class="btn" id="gameStartBtn-${panel}">Start Game</button>
+              <span class="muted small">Tap target circles before they disappear.</span>
+            </div>
+          `;
+
+        case 'news':
+          return `
+            <div class="browser-bar" style="margin-bottom:12px">
+              <input id="newsSearch-${panel}" placeholder="Filter tech news..." oninput="filterNews('${panel}')" />
+            </div>
+            <div id="newsGrid-${panel}" style="display:grid; gap:8px"></div>
+          `;
+
+        case 'reader':
+          return `
+            <div class="card" style="padding:12px">
+              <h4>Import Book / Document</h4>
+              <input type="file" id="readerInput-${panel}" accept=".txt,.pdf" style="margin-top:8px" />
+            </div>
+            <div class="card" id="readerViewer-${panel}" style="font-size:14px; line-height:1.6; max-height:220px; overflow-y:auto; background:#fafafa; border:1px solid #ddd; padding:12px; border-radius:8px">
+              <p class="muted" style="text-align:center">No text loaded. Please select a .txt file above.</p>
+            </div>
+          `;
+
+        default:
+          return '<div class="card">Virtual application interface not found.</div>';
+      }
+    }
+
+    // ============================================================================
+    //  App Script Inits
+    // ============================================================================
+    function afterRenderApp(id, panel) {
+      switch (id) {
+        case 'weather':
+          fetchWeather(panel);
+          break;
+
+        case 'notes':
+          const notesEl = $('notes-' + panel);
+          if (notesEl) {
+            notesEl.value = localStorage.getItem('deviceos-notes') || '';
+            let timer = null;
+            notesEl.oninput = () => {
+              $('notesSaving-' + panel).textContent = '💾 Saving...';
+              clearTimeout(timer);
+              timer = setTimeout(() => {
+                localStorage.setItem('deviceos-notes', notesEl.value);
+                $('notesSaving-' + panel).textContent = '💾 Auto-saved locally';
+              }, 800);
+            };
+          }
+          break;
+
+        case 'calc':
+          buildCalculator(panel);
+          break;
+
+        case 'settings':
+          // Handled via data bindings
+          break;
+
+        case 'gallery':
+          renderGallery(panel);
+          break;
+
+        case 'clock':
+          bindStopwatch(panel);
+          break;
+
+        case 'maps':
+          initMapsApp(panel);
+          break;
+
+        case 'paint':
+          setupPaintCanvas(panel);
+          break;
+
+        case 'wallpaper':
+          setupWallpaperApp(panel);
+          break;
+
+        case 'music':
+          setupMusicApp(panel);
+          break;
+
+        case 'files':
+          setupFilesApp(panel);
+          break;
+
+        case 'store':
+          renderStore(panel);
+          break;
+
+        case 'calendar':
+          setupCalendar(panel);
+          break;
+
+        case 'games':
+          setupGameApp(panel);
+          break;
+
+        case 'news':
+          renderNews(panel);
+          break;
+
+        case 'reader':
+          setupReader(panel);
+          break;
+      }
+    }
+
+    // ============================================================================
+    //  App Architectures
+    // ============================================================================
+
+    // --- Weather ---
+    async function fetchWeather(panel) {
+      // Coordinates for Kolkata
+      const lat = 22.5726;
+      const lon = 88.3639;
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const cur = data.current || {};
+        const code = cur.weather_code || 0;
+        const icon = code === 0 ? '☀️' : code < 4 ? '⛅' : code < 60 ? '🌥️' : code < 80 ? '🌧️' : '⛈️';
+        
+        $(`weatherIcon-${panel}`).textContent = icon;
+        $(`weatherTemp-${panel}`).textContent = Math.round(cur.temperature_2m) + '°C';
+        $(`weatherDesc-${panel}`).textContent = getWeatherCodeName(code);
+        $(`weatherWind-${panel}`).textContent = cur.wind_speed_10m + ' km/h';
+        $(`weatherHum-${panel}`).textContent = cur.relative_humidity_2m + '%';
+
+        // Mock 4-day forecast
+        const forecastBox = $(`forecastRow-${panel}`);
+        if (forecastBox) {
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          let d = new Date();
+          let html = '';
+          for (let i = 1; i <= 4; i++) {
+            d.setDate(d.getDate() + 1);
+            html += `
+              <div class="card" style="flex:1; padding:10px 4px; text-align:center; margin-bottom:0">
+                <span class="small muted">${days[d.getDay()]}</span><br>
+                <span style="font-size:18px; margin:4px 0; display:block">⛅</span>
+                <strong class="small">${Math.round(cur.temperature_2m - i * 1.2)}°</strong>
+              </div>
+            `;
+          }
+          forecastBox.innerHTML = html;
+        }
+      } catch (err) {
+        $(`weatherDesc-${panel}`).textContent = 'Offline (API Fallback active)';
+        $(`weatherTemp-${panel}`).textContent = '31°C';
+        $(`weatherWind-${panel}`).textContent = '8 km/h';
+        $(`weatherHum-${panel}`).textContent = '54%';
+      }
+    }
+
+    function getWeatherCodeName(code) {
+      if (code === 0) return 'Sunny & Clear';
+      if (code < 4) return 'Partly Cloudy';
+      if (code < 60) return 'Misty Overcast';
+      if (code < 80) return 'Light Shower';
+      return 'Thunderstorm Storm';
+    }
+
+    // --- Calculator ---
+    function buildCalculator(panel) {
+      const container = $('calcButtons-' + panel);
+      if (!container || container.dataset.built === 'true') return;
+      container.dataset.built = 'true';
+      const display = $('calcDisplay-' + panel);
+      
+      let expr = '';
+      let lastPressedOperator = false;
+
+      const buttons = [
+        'C', '±', '%', '÷',
+        '7', '8', '9', '×',
+        '4', '5', '6', '−',
+        '1', '2', '3', '+',
+        '0', '.', '='
+      ];
+
+      buttons.forEach(key => {
+        const b = document.createElement('button');
+        b.className = 'calc-btn';
+        if (['÷', '×', '−', '+', '%'].includes(key)) b.className += ' op';
+        if (key === '=') b.className += ' eq';
+        if (key === '0') b.className += ' zero';
+        
+        b.textContent = key;
+        b.onclick = () => {
+          if (key === 'C') {
+            expr = '';
+            display.textContent = '0';
+          } else if (key === '±') {
+            if (expr) {
+              expr = expr.startsWith('-') ? expr.slice(1) : '-' + expr;
+              display.textContent = expr;
+            }
+          } else if (key === '=') {
+            try {
+              let mathExpr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+              const output = Function('"use strict"; return (' + (mathExpr || '0') + ')')();
+              expr = Number(output.toFixed(6)).toString();
+              display.textContent = expr;
+            } catch (e) {
+              display.textContent = 'Error';
+              expr = '';
+            }
+            lastPressedOperator = true;
+          } else {
+            if (lastPressedOperator && !['+', '−', '×', '÷'].includes(key)) {
+              expr = '';
+              lastPressedOperator = false;
+            }
+            expr += key;
+            display.textContent = expr;
+          }
+        };
+        container.appendChild(b);
+      });
+    }
+
+    // --- Gallery ---
+    function renderGallery(panel) {
+      const grid = $('galleryGrid-' + panel);
+      if (!grid) return;
+      grid.innerHTML = '';
+      
+      // Load custom photos from localStorage if present
+      const customPhotos = JSON.parse(localStorage.getItem('deviceos-custom-photos') || '[]');
+      
+      let html = customPhotos.map((photo, i) => `
+        <img src="${photo}" alt="Custom Capture" onclick="openLightbox('${photo}')" />
+      `).join('');
+
+      for (let i = 1; i <= 9; i++) {
+        const url = `https://picsum.photos/240/240?random=${i + 40}`;
+        html += `
+          <img src="${url}" alt="Gallery ${i}" onclick="openLightbox('${url}')" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eee%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23bbb%22>Img Error</text></svg>'" />
+        `;
+      }
+      grid.innerHTML = html;
+    }
+
+    function takeVirtualPhoto() {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:absolute; inset:0; background:#fff; z-index:9999; opacity:1; transition:opacity 0.25s';
+      $('screen').appendChild(overlay);
+      
+      setTimeout(() => { overlay.style.opacity = 0; }, 50);
+      setTimeout(() => overlay.remove(), 300);
+
+      // Generate random canvas data to simulate a taken photo
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 400;
+      tempCanvas.height = 400;
+      const ctx = tempCanvas.getContext('2d');
+      
+      // Draw cool gradient block
+      const grad = ctx.createLinearGradient(0,0,400,400);
+      grad.addColorStop(0, '#f093fb');
+      grad.addColorStop(1, '#f5576c');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,400,400);
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = '28px Arial';
+      ctx.fillText('DeviceOS 3.0 Snap', 30, 200);
+      ctx.font = '16px Arial';
+      ctx.fillText(new Date().toLocaleString(), 30, 240);
+      
+      const snapUrl = tempCanvas.toDataURL();
+      const customPhotos = JSON.parse(localStorage.getItem('deviceos-custom-photos') || '[]');
+      customPhotos.unshift(snapUrl);
+      localStorage.setItem('deviceos-custom-photos', JSON.stringify(customPhotos));
+      
+      addNotification('Camera', 'Photo saved to Gallery.');
+      
+      // Refresh if gallery is active
+      if (panelApps.A === 'gallery') renderGallery('A');
+      if (panelApps.B === 'gallery') renderGallery('B');
+    }
+
+    // --- Clock & Stopwatch ---
+    let swInterval = null;
+    let swStartVal = 0;
+    let swTimeElapsed = 0;
+    let swRunning = false;
+
+    function bindStopwatch(panel) {
+      const startBtn = $(`swStart-${panel}`);
+      const lapBtn = $(`swLap-${panel}`);
+      const resetBtn = $(`swReset-${panel}`);
+      const timeText = $(`swTime-${panel}`);
+      const lapsBox = $(`swLaps-${panel}`);
+      
+      if (!startBtn) return;
+
+      function updateDisplay() {
+        let t = swTimeElapsed;
+        if (swRunning) {
+          t += Date.now() - swStartVal;
+        }
+        const ms = Math.floor((t % 1000) / 10);
+        const s = Math.floor((t / 1000) % 60);
+        const m = Math.floor((t / 60000) % 60);
+        timeText.textContent = 
+          (m < 10 ? '0' + m : m) + ':' + 
+          (s < 10 ? '0' + s : s) + '.' + 
+          (ms < 10 ? '0' + ms : ms);
+      }
+
+      startBtn.onclick = () => {
+        if (!swRunning) {
+          swRunning = true;
+          swStartVal = Date.now();
+          swInterval = setInterval(updateDisplay, 30);
+          startBtn.textContent = 'Pause';
+        } else {
+          swRunning = false;
+          swTimeElapsed += Date.now() - swStartVal;
+          clearInterval(swInterval);
+          startBtn.textContent = 'Start';
+        }
+      };
+
+      lapBtn.onclick = () => {
+        if (swTimeElapsed === 0 && !swRunning) return;
+        const lapLi = document.createElement('div');
+        lapLi.className = 'row card';
+        lapLi.style.cssText = 'padding:6px 10px; margin-bottom:0';
+        lapLi.innerHTML = `<span>Lap ${lapsBox.children.length + 1}</span><strong>${timeText.textContent}</strong>`;
+        lapsBox.appendChild(lapLi);
+      };
+
+      resetBtn.onclick = () => {
+        swRunning = false;
+        clearInterval(swInterval);
+        swTimeElapsed = 0;
+        swStartVal = 0;
+        startBtn.textContent = 'Start';
+        timeText.textContent = '00:00.00';
+        lapsBox.innerHTML = '';
+      };
+    }
+
+    // --- Maps App ---
+    function initMapsApp(panel) {
+      const container = $('map-' + panel);
+      if (!container) return;
+      
+      // Set explicit height in cases of resizing
+      container.style.height = '290px';
+
+      setTimeout(() => {
+        const lat = 22.5726;
+        const lon = 88.3639;
+
+        const map = L.map(container.id).setView([lat, lon], 12);
+        mapsInstances[panel] = map;
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let marker = L.marker([lat, lon]).addTo(map)
+          .bindPopup('<b>Kolkata, India</b><br>Virtual Station Location').openPopup();
+
+        const locateBtn = $(`mapLocate-${panel}`);
+        if (locateBtn) {
+          locateBtn.onclick = () => {
+            locateBtn.textContent = '⏳';
+            if (!navigator.geolocation) {
+              alert('Geolocation not supported in this client environment.');
+              locateBtn.textContent = '📍';
+              return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+              pos => {
+                const myLat = pos.coords.latitude;
+                const myLon = pos.coords.longitude;
+                map.setView([myLat, myLon], 15);
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([myLat, myLon]).addTo(map)
+                  .bindPopup(`<b>You are here!</b><br>Lat: ${myLat.toFixed(4)}, Lng: ${myLon.toFixed(4)}`).openPopup();
+                locateBtn.textContent = '📍';
+              },
+              err => {
+                alert('Could not resolve location coordinates. Fallback active.\n\nError: ' + err.message);
+                locateBtn.textContent = '📍';
+              },
+              { timeout: 8000 }
+            );
+          };
+        }
+      }, 100);
+    }
+
+    // --- Smart Paint Canvas ---
+    function setupPaintCanvas(panel) {
+      const canvas = $('paintCanvas-' + panel);
+      if (!canvas) return;
+      
+      const width = canvas.parentElement.offsetWidth || 480;
+      canvas.width = width;
+      canvas.height = 300;
+
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      let drawing = false;
+      let startX = 0;
+      let startY = 0;
+      let imgData = null;
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (e.clientX - rect.left) * (canvas.width / rect.width),
+          y: (e.clientY - rect.top) * (canvas.height / rect.height)
+        };
+      }
+
+      function saveUndo() {
+        paintUndo.push(canvas.toDataURL());
+        if (paintUndo.length > 20) paintUndo.shift();
+      }
+
+      canvas.onpointerdown = e => {
+        drawing = true;
+        canvas.setPointerCapture(e.pointerId);
+        saveUndo();
+        const pos = getMousePos(e);
+        startX = pos.x;
+        startY = pos.y;
+        imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        if (['brush', 'pen', 'eraser'].includes($(`paintMode-${panel}`).value)) {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+        }
+      };
+
+      canvas.onpointermove = e => {
+        if (!drawing) return;
+        const pos = getMousePos(e);
+        const mode = $(`paintMode-${panel}`).value;
+        const color = $(`paintColor-${panel}`).value;
+        const size = $(`paintSize-${panel}`).value;
+        const opacity = $(`paintOpacity-${panel}`).value / 100;
+
+        ctx.lineWidth = size;
+        ctx.globalAlpha = opacity;
+        ctx.strokeStyle = mode === 'eraser' ? '#ffffff' : color;
+        ctx.fillStyle = color;
+
+        if (['line', 'rect', 'circle'].includes(mode)) {
+          ctx.putImageData(imgData, 0, 0);
+          ctx.beginPath();
+          if (mode === 'line') {
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+          } else if (mode === 'rect') {
+            ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+          } else if (mode === 'circle') {
+            const rad = Math.hypot(pos.x - startX, pos.y - startY);
+            ctx.arc(startX, startY, rad, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        } else {
+          if (mode === 'brush') {
+            ctx.strokeStyle = color;
+            // spray effect logic
+            ctx.globalAlpha = opacity * 0.4;
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+          } else {
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 1.0;
+      };
+
+      canvas.onpointerup = () => {
+        drawing = false;
+      };
+
+      $(`clearPaint-${panel}`).onclick = () => {
+        saveUndo();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      };
+
+      $(`undoPaint-${panel}`).onclick = () => {
+        const last = paintUndo.pop();
+        if (!last) return;
+        const img = new Image();
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = last;
+      };
+
+      $(`savePaint-${panel}`).onclick = () => {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL();
+        a.download = 'deviceos-painting.png';
+        a.click();
+      };
+    }
+
+    function stampPaint(panel, emoji) {
+      const canvas = $('paintCanvas-' + panel);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      // Save undo history
+      paintUndo.push(canvas.toDataURL());
+      if (paintUndo.length > 20) paintUndo.shift();
+
+      ctx.font = '64px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, canvas.width / 2, canvas.height / 2);
+      addNotification('Paint', emoji + ' stamped to canvas.');
+    }
+
+    // --- Wallpaper ---
+    function setupWallpaperApp(panel) {
+      const grid = $('wallpaperGrid-' + panel);
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const saved = localStorage.getItem('deviceos-wallpaper') || wallPresets[0].css;
+      wallPresets.forEach(wp => {
+        const b = document.createElement('button');
+        b.className = 'wallpaper-option' + (wp.css === saved ? ' selected' : '');
+        b.style.background = wp.css;
+        b.onclick = () => {
+          applyWallpaper(wp.css);
+          document.querySelectorAll('.wallpaper-option').forEach(e => e.classList.remove('selected'));
+          b.classList.add('selected');
+          addNotification('Theme', 'System background wallpaper adjusted.');
+        };
+        grid.appendChild(b);
+      });
+
+      const uploadInput = $('wallInput-' + panel);
+      if (uploadInput) {
+        uploadInput.onchange = e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64Url = `url(${reader.result})`;
+            applyWallpaper(base64Url);
+            addNotification('Theme', 'Custom snapshot set as wallpaper.');
+          };
+          reader.readAsDataURL(file);
+        };
+      }
+    }
+
+    // --- Music Player App ---
+    function setupMusicApp(panel) {
+      const fileInput = $('musicFiles-' + panel);
+      if (fileInput) {
+        fileInput.onchange = e => {
+          Array.from(e.target.files).forEach(f => {
+            playlist.push({
+              name: f.name.replace(/\.[^.]+$/, ''),
+              url: URL.createObjectURL(f)
+            });
+          });
+          renderPlaylist(panel);
+          if (currentTrackIdx < 0 && playlist.length > 0) {
+            loadTrack(0, panel);
+          }
+        };
+      }
+      
+      audioObj.ontimeupdate = () => {
+        if (!audioObj.duration) return;
+        const pct = (audioObj.currentTime / audioObj.duration) * 100;
+        const fill = $(`musicFill-${panel}`);
+        if (fill) fill.style.width = pct + '%';
+        
+        const curText = $(`musicTimeCur-${panel}`);
+        if (curText) curText.textContent = formatTime(audioObj.currentTime);
+      };
+
+      audioObj.onended = () => {
+        if (repeatMode) {
+          audioObj.currentTime = 0;
+          audioObj.play();
+        } else {
+          nextTrack(panel);
+        }
+      };
+
+      audioObj.onloadedmetadata = () => {
+        const durText = $(`musicTimeDur-${panel}`);
+        if (durText) durText.textContent = formatTime(audioObj.duration);
+      };
+
+      renderPlaylist(panel);
+      if (currentTrackIdx >= 0) {
+        $(`musicTitle-${panel}`).textContent = playlist[currentTrackIdx].name;
+        $(`musicArtist-${panel}`).textContent = 'Local File';
+        $(`musicPlayBtn-${panel}`).textContent = audioObj.paused ? '▶' : '⏸';
+        $(`musicArt-${panel}`).classList.toggle('playing', !audioObj.paused);
+      }
+    }
+
+    // Playlist generator
+    function renderPlaylist(panel) {
+      const box = $('playlistBox-' + panel);
+      if (!box) return;
+      if (!playlist.length) {
+        box.innerHTML = '<div class="card muted small">No uploaded tracks. Select audio files.</div>';
+        return;
+      }
+      box.innerHTML = playlist.map((track, idx) => `
+        <div class="track ${idx === currentTrackIdx ? 'active' : ''}" onclick="loadTrack(${idx}, '${panel}'); toggleMusicPlayback('${panel}')">
+          🎵 ${escapeHTML(track.name)}
+        </div>
+      `).join('');
+    }
+
+    function loadTrack(idx, panel) {
+      if (idx < 0 || idx >= playlist.length) return;
+      currentTrackIdx = idx;
+      audioObj.src = playlist[idx].url;
+      
+      $(`musicTitle-${panel}`).textContent = playlist[idx].name;
+      $(`musicArtist-${panel}`).textContent = 'Local File';
+      
+      // Refresh playlist display
+      renderPlaylist(panel);
+    }
+
+    function toggleMusicPlayback(panel) {
+      if (currentTrackIdx < 0) {
+        $(`musicFiles-${panel}`).click();
+        return;
+      }
+      
+      const playBtn = $(`musicPlayBtn-${panel}`);
+      const art = $(`musicArt-${panel}`);
+      
+      if (audioObj.paused) {
+        audioObj.play().catch(e => {});
+        playBtn.textContent = '⏸';
+        art.classList.add('playing');
+        addNotification('Music Player', 'Now playing: ' + playlist[currentTrackIdx].name);
+      } else {
+        audioObj.pause();
+        playBtn.textContent = '▶';
+        art.classList.remove('playing');
+      }
+    }
+
+    function nextTrack(panel) {
+      if (!playlist.length) return;
+      let next = currentTrackIdx + 1;
+      if (shuffleMode) {
+        next = Math.floor(Math.random() * playlist.length);
+      }
+      if (next >= playlist.length) next = 0;
+      loadTrack(next, panel);
+      audioObj.play().catch(e=>{});
+      $(`musicPlayBtn-${panel}`).textContent = '⏸';
+      $(`musicArt-${panel}`).classList.add('playing');
+    }
+
+    function prevTrack(panel) {
+      if (!playlist.length) return;
+      let prev = currentTrackIdx - 1;
+      if (prev < 0) prev = playlist.length - 1;
+      loadTrack(prev, panel);
+      audioObj.play().catch(e=>{});
+      $(`musicPlayBtn-${panel}`).textContent = '⏸';
+      $(`musicArt-${panel}`).classList.add('playing');
+    }
+
+    function seekTrack(e, panel) {
+      if (!audioObj.duration) return;
+      const bar = $(`musicBar-${panel}`);
+      const rect = bar.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      audioObj.currentTime = pct * audioObj.duration;
+    }
+
+    function toggleMusicShuffle(panel) {
+      shuffleMode = !shuffleMode;
+      $(`musicShuffle-${panel}`).style.color = shuffleMode ? 'var(--primary)' : 'inherit';
+    }
+
+    // Toggle repeat mode
+    function toggleMusicRepeat(panel) {
+      repeatMode = !repeatMode;
+      $(`musicRepeat-${panel}`).style.color = repeatMode ? 'var(--primary)' : 'inherit';
+    }
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' + sec : sec);
+    }
+
+    // --- Files IndexedDB Backend ---
+    function openFilesDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('DeviceOSFilesDB', 1);
+        req.onupgradeneeded = () => {
+          req.result.createObjectStore('files', { keyPath: 'id' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbSaveFile(file) {
+      const db = await openFilesDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('files', 'readwrite');
+        tx.objectStore('files').put({
+          id: Date.now() + '-' + file.name,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          blob: file,
+          created: new Date().toISOString()
+        });
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function dbGetFiles() {
+      const db = await openFilesDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('files', 'readonly');
+        const req = tx.objectStore('files').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbDeleteFile(id) {
+      const db = await openFilesDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('files', 'readwrite');
+        tx.objectStore('files').delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    function setupFilesApp(panel) {
+      const dropZone = $(`fileDrop-${panel}`);
+      const fileInput = $(`fileInput-${panel}`);
+
+      if (dropZone) {
+        dropZone.onclick = () => fileInput.click();
+        dropZone.ondragover = e => e.preventDefault();
+        dropZone.ondrop = async e => {
+          e.preventDefault();
+          const files = Array.from(e.dataTransfer.files);
+          for (const f of files) {
+            await dbSaveFile(f);
+          }
+          addNotification('File Manager', 'Files imported via drop.');
+          renderFilesList(panel);
+        };
+      }
+
+      if (fileInput) {
+        fileInput.onchange = async e => {
+          const files = Array.from(e.target.files);
+          for (const f of files) {
+            await dbSaveFile(f);
+          }
+          addNotification('File Manager', 'Files uploaded to Database.');
+          renderFilesList(panel);
+        };
+      }
+
+      renderFilesList(panel);
+    }
+
+    async function renderFilesList(panel) {
+      const box = $(`fileList-${panel}`);
+      if (!box) return;
+      
+      try {
+        const files = await dbGetFiles();
+        if (!files.length) {
+          box.innerHTML = '<div class="card muted small" style="text-align:center">No local files imported.</div>';
+          return;
+        }
+        
+        box.innerHTML = files.map(f => `
+          <div class="file-item">
+            <div>
+              <strong>${escapeHTML(f.name)}</strong>
+              <span>${formatFileSize(f.size)} • ${new Date(f.created).toLocaleDateString()}</span>
+            </div>
+            <div style="display:flex; gap:4px">
+              <button class="pill-btn" onclick="openFileObj('${f.id}')">View</button>
+              <button class="pill-btn danger" onclick="deleteFileObj('${f.id}', '${panel}')">Del</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        box.innerHTML = '<div class="card error">Database offline.</div>';
+      }
+    }
+
+    async function openFileObj(id) {
+      const list = await dbGetFiles();
+      const file = list.find(x => x.id === id);
+      if (!file) return;
+      const url = URL.createObjectURL(file.blob);
+      window.open(url, '_blank');
+    }
+
+    async function deleteFileObj(id, panel) {
+      await dbDeleteFile(id);
+      renderFilesList(panel);
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // --- App Store ---
+    function renderStore(panel) {
+      const grid = $(`storeGrid-${panel}`);
+      if (!grid) return;
+      
+      grid.innerHTML = STORE_APPS.map(app => {
+        const installed = installedApps.includes(app.id);
+        return `
+          <div class="store-card">
+            <div class="store-icon">${app.icon}</div>
+            <h4>${app.name}</h4>
+            <p>${app.desc}</p>
+            <button class="btn ${installed ? 'secondary danger' : ''}" style="width:100%" onclick="toggleInstallApp('${app.id}', '${panel}')">
+              ${installed ? 'Uninstall' : 'Install'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleInstallApp(id, panel) {
+      if (installedApps.includes(id)) {
+        installedApps = installedApps.filter(x => x !== id);
+        addNotification('Store', 'App uninstalled.');
+      } else {
+        installedApps.push(id);
+        addNotification('Store', 'App successfully installed.');
+      }
+      persist();
+      renderHomeApps();
+      renderStore(panel);
+    }
+
+    // --- Browser Navigation ---
+    function browserGo(panel) {
+      const inp = $(`browserInput-${panel}`);
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (!val) return;
+      
+      let target = val;
+      if (!/^https?:\/\//i.test(target)) {
+        if (val.includes('.')) {
+          target = 'https://' + val;
+        } else {
+          target = 'https://www.google.com/search?q=' + encodeURIComponent(val);
+        }
+      }
+      window.open(target, '_blank');
+      addNotification('Browser', 'Opened website: ' + target);
+    }
+
+    function quickOpenBrowser(url) {
+      window.open(url, '_blank');
+    }
+
+    // --- Calendar Planner ---
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth();
+
+    function setupCalendar(panel) {
+      renderCalendarDays(panel);
+      renderCalendarMemos(panel);
+    }
+
+    function renderCalendarDays(panel) {
+      const grid = $(`calGrid-${panel}`);
+      const header = $(`calHeader-${panel}`);
+      if (!grid) return;
+
+      const now = new Date();
+      const currYear = now.getFullYear();
+      const currMonth = now.getMonth();
+      const currDate = now.getDate();
+
+      header.textContent = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+      
+      const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+      let html = weekdays.map(day => `<div class="cal-day-header">${day}</div>`).join('');
+      
+      const firstDayIdx = new Date(currYear, currMonth, 1).getDay();
+      const totalDays = new Date(currYear, currMonth + 1, 0).getDate();
+      
+      for (let i = 0; i < firstDayIdx; i++) {
+        html += '<div class="cal-day muted"></div>';
+      }
+
+      const events = JSON.parse(localStorage.getItem('deviceos-calendar-events') || '{}');
+
+      for (let d = 1; d <= totalDays; d++) {
+        const isToday = (d === currDate);
+        const dateKey = `${currYear}-${currMonth + 1}-${d}`;
+        const hasEvent = !!events[dateKey];
+        html += `
+          <div class="cal-day ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}" style="cursor:pointer" onclick="viewCalendarDate('${panel}', ${d})">
+            ${d}
+          </div>
+        `;
+      }
+      grid.innerHTML = html;
+    }
+
+    function addCalendarEvent(panel) {
+      const now = new Date();
+      const d = prompt('Enter calendar day of this month:', now.getDate());
+      if (!d) return;
+      const dayNum = parseInt(d);
+      if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
+        alert('Invalid day input.');
+        return;
+      }
+      const memo = prompt('Enter event memo notes:');
+      if (!memo) return;
+
+      const dateKey = `${now.getFullYear()}-${now.getMonth() + 1}-${dayNum}`;
+      const events = JSON.parse(localStorage.getItem('deviceos-calendar-events') || '{}');
+      events[dateKey] = memo;
+      localStorage.setItem('deviceos-calendar-events', JSON.stringify(events));
+
+      addNotification('Calendar', `Memo added for day ${dayNum}.`);
+      setupCalendar(panel);
+    }
+
+    function viewCalendarDate(panel, day) {
+      const now = new Date();
+      const dateKey = `${now.getFullYear()}-${now.getMonth() + 1}-${day}`;
+      const events = JSON.parse(localStorage.getItem('deviceos-calendar-events') || '{}');
+      if (events[dateKey]) {
+        alert(`📅 Day ${day} Event:\n\n${events[dateKey]}`);
+      } else {
+        alert(`No events scheduled for Day ${day}.`);
+      }
+    }
+
+    function renderCalendarMemos(panel) {
+      const box = $(`calEvents-${panel}`);
+      if (!box) return;
+      const events = JSON.parse(localStorage.getItem('deviceos-calendar-events') || '{}');
+      const entries = Object.entries(events);
+      if (!entries.length) {
+        box.innerHTML = '<span class="muted">No event memos scheduled.</span>';
+        return;
+      }
+      box.innerHTML = entries.map(([date, memo]) => `
+        <div class="row card" style="padding:6px 10px; margin-bottom:0">
+          <span>📅 ${date}</span>
+          <strong>${escapeHTML(memo)}</strong>
+        </div>
+      `).join('');
+    }
+
+    // --- Target Reflex Clicking Game ---
+    let gameScore = 0;
+    let gameTarget = null;
+    let gameCanvas = null;
+    let gameCtx = null;
+
+    function setupGameApp(panel) {
+      const scoreText = $(`gameScore-${panel}`);
+      const highText = $(`gameHigh-${panel}`);
+      const startBtn = $(`gameStartBtn-${panel}`);
+      gameCanvas = $(`gameCanvas-${panel}`);
+      if (!gameCanvas) return;
+      
+      gameCtx = gameCanvas.getContext('2d');
+      gameCanvas.width = gameCanvas.parentElement.offsetWidth || 340;
+      gameCanvas.height = 200;
+
+      // Clear canvas
+      gameCtx.fillStyle = '#18181b';
+      gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+      
+      highText.textContent = localStorage.getItem('deviceos-game-high') || '0';
+
+      startBtn.onclick = () => {
+        gameScore = 0;
+        scoreText.textContent = '0';
+        clearInterval(gameInterval);
+        
+        gameTarget = spawnTarget();
+        gameInterval = setInterval(gameLoop, 1000);
+        drawGameCanvas();
+      };
+
+      gameCanvas.onclick = e => {
+        if (!gameTarget) return;
+        const rect = gameCanvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        const dist = Math.hypot(clickX - gameTarget.x, clickY - gameTarget.y);
+        if (dist <= gameTarget.r) {
+          gameScore += 10;
+          scoreText.textContent = gameScore;
+          // High score check
+          const high = Number(localStorage.getItem('deviceos-game-high') || '0');
+          if (gameScore > high) {
+            localStorage.setItem('deviceos-game-high', gameScore.toString());
+            highText.textContent = gameScore;
+          }
+          gameTarget = spawnTarget();
+          drawGameCanvas();
+        }
+      };
+    }
+
+    function spawnTarget() {
+      const r = Math.floor(Math.random() * 10) + 12; // Radius
+      const x = Math.floor(Math.random() * (gameCanvas.width - r * 2)) + r;
+      const y = Math.floor(Math.random() * (gameCanvas.height - r * 2)) + r;
+      return { x, y, r };
+    }
+
+    function gameLoop() {
+      gameTarget = spawnTarget();
+      drawGameCanvas();
+    }
+
+    function drawGameCanvas() {
+      if (!gameCanvas || !gameCtx) return;
+      gameCtx.fillStyle = '#18181b';
+      gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+      if (gameTarget) {
+        gameCtx.beginPath();
+        gameCtx.arc(gameTarget.x, gameTarget.y, gameTarget.r, 0, Math.PI * 2);
+        gameCtx.fillStyle = 'var(--red)';
+        gameCtx.fill();
+        // Inner white circle
+        gameCtx.beginPath();
+        gameCtx.arc(gameTarget.x, gameTarget.y, gameTarget.r * 0.4, 0, Math.PI * 2);
+        gameCtx.fillStyle = '#ffffff';
+        gameCtx.fill();
+      }
+    }
+
+    // --- News App ---
+    const NEWS_MOCK = [
+      { title: 'DeviceOS 3.0 Live Demo Released', desc: 'Arshad deploys the standalone phone and tablet virtual browser simulator.' },
+      { title: 'IndexedDB File manager capability integrated', desc: 'Enables developers to test local PDF, image, and text binary files natively.' },
+      { title: 'Leaflet GPS integration with Geolocation', desc: 'Users can map exact coordinates fallbacks with OpenStreetMap assets.' },
+      { title: 'The state of web design in 2026', desc: 'Aesthetic components, glassmorphism, outfit fonts, and dark theme bindings.' },
+      { title: 'Google Gemini dynamic agents systems', desc: 'Artificial intelligence pairs programming tasks to achieve stunning interfaces.' }
+    ];
+
+    function renderNews(panel, query = '') {
+      const box = $(`newsGrid-${panel}`);
+      if (!box) return;
+      
+      const list = NEWS_MOCK.filter(n => !query || n.title.toLowerCase().includes(query.toLowerCase()) || n.desc.toLowerCase().includes(query.toLowerCase()));
+      if (!list.length) {
+        box.innerHTML = '<span class="muted">No matching news logs found.</span>';
+        return;
+      }
+
+      box.innerHTML = list.map(n => `
+        <div class="card" style="padding:12px; margin-bottom:0">
+          <h4 style="font-weight:700">${escapeHTML(n.title)}</h4>
+          <p class="muted small" style="margin-top:4px">${escapeHTML(n.desc)}</p>
+        </div>
+      `).join('');
+    }
+
+    function filterNews(panel) {
+      const q = $(`newsSearch-${panel}`).value;
+      renderNews(panel, q);
+    }
+
+    // --- Story book Reader ---
+    function setupReader(panel) {
+      const input = $(`readerInput-${panel}`);
+      const viewer = $(`readerViewer-${panel}`);
+      if (input) {
+        input.onchange = e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          if (file.name.endsWith('.txt')) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              viewer.innerHTML = `<pre style="white-space:pre-wrap; font-family:inherit">${escapeHTML(reader.result)}</pre>`;
+              addNotification('Reader', 'Document loaded: ' + file.name);
+            };
+            reader.readAsText(file);
+          } else {
+            // Safe Iframe view fallback for PDFs
+            viewer.innerHTML = `
+              <div style="text-align:center">
+                <strong>${escapeHTML(file.name)}</strong>
+                <p class="muted small" style="margin-top:6px">PDF loaded. Tap button below to open in secure window.</p>
+                <button class="btn" onclick="openFileInTab(event)" style="margin-top:10px">Read File</button>
+              </div>
+            `;
+            viewer.dataset.fileBlobUrl = URL.createObjectURL(file);
+          }
+        };
+      }
+    }
+
+    function openFileInTab(e) {
+      const url = e.target.parentElement.parentElement.dataset.fileBlobUrl;
+      if (url) window.open(url, '_blank');
+    }
+
+    function simulateCall(contact) {
+      alert(`📞 Call simulation to: ${contact}\n\nRunning dial tones... Tap OK to terminate call.`);
+      addNotification('Phone Dialer', `Call connected with ${contact}.`);
+    }
+
+    // Helper utilities
+    function escapeHTML(str) {
+      return str.replace(/[&<>"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    // Global clock tick
+    function updateClocks() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const statusTime = $('statusTime');
+      if (statusTime) statusTime.textContent = timeStr;
+      
+      document.querySelectorAll('[id^="clockText-"]').forEach(el => {
+        el.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      });
+
+      document.querySelectorAll('[id^="clockDate-"]').forEach(el => {
+        el.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+      });
+    }
+
+    // Auto running hooks
+    setInterval(updateClocks, 1000);
+    updateClocks();
+
+    // Battery simulation
+    setInterval(() => {
+      if (battery > 5) {
+        battery--;
+        $('batteryPct').textContent = battery;
+        $('batteryFill').style.width = battery + '%';
+        // adjust battery bar color
+        $('batteryFill').style.backgroundColor = battery <= 20 ? 'var(--red)' : battery <= 35 ? 'var(--orange)' : '#fff';
+      }
+    }, 60000);
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') handleHomeBar();
+    });
+
+    // Setup on first window load
+    window.onload = () => {
+      // Apply initial background bindings
+      applySettingsUI();
+      renderNotifications();
+    };
   </script>
 </body>
 </html>
